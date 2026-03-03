@@ -155,6 +155,21 @@ Display settings control how the Git Graph visualizes your repository history, i
 }
 ```
 
+### showCurrentBranchByDefault
+
+<ParamField path="neo-git-graph.showCurrentBranchByDefault" type="boolean" default="false">
+  Show the current branch by default when Git Graph is opened.
+  
+  When enabled, the graph will automatically filter to show only the current branch when you first open Git Graph. When disabled (default), all branches are shown.
+</ParamField>
+
+**Example:**
+```json
+{
+  "neo-git-graph.showCurrentBranchByDefault": true
+}
+```
+
 ## Example Configuration
 
 Here's a complete example combining multiple display settings:
@@ -171,6 +186,7 @@ Here's a complete example combining multiple display settings:
   ],
   "neo-git-graph.tabIconColourTheme": "grey",
   "neo-git-graph.autoCenterCommitDetailsView": true,
-  "neo-git-graph.showStatusBarItem": true
+  "neo-git-graph.showStatusBarItem": true,
+  "neo-git-graph.showCurrentBranchByDefault": false
 }
 ```

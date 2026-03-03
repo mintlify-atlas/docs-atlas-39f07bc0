@@ -1,0 +1,99 @@
+{
+  "projectType": "frontend",
+  "projectName": "neo-git-graph",
+  "projectDescription": "A VS Code extension that visualizes Git history as an interactive graph with branch actions and devcontainer support.",
+  "theme": "mint",
+  "primaryColor": "#0085d9",
+  "lightColor": null,
+  "darkColor": null,
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "features/graph-view",
+              "features/commit-details",
+              "features/branch-operations",
+              "features/tag-management",
+              "features/avatar-support",
+              "features/multi-repo"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/overview",
+              "configuration/display-settings",
+              "configuration/performance-settings"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/devcontainer-setup",
+              "guides/troubleshooting",
+              "guides/contributing"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Commands",
+        "groups": [
+          {
+            "group": "VS Code Commands",
+            "pages": [
+              "commands/view",
+              "commands/clear-avatar-cache"
+            ]
+          },
+          {
+            "group": "Git Actions",
+            "pages": [
+              "commands/branch-actions",
+              "commands/tag-actions",
+              "commands/commit-actions"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Interactive Git graph visualization",
+    "Branch and tag management",
+    "Commit details and diff viewing",
+    "Avatar support from GitHub/GitLab/Gravatar",
+    "Multi-repository workspace support",
+    "Devcontainer compatibility",
+    "Customizable graph colors and styles"
+  ],
+  "publicApiSurface": [
+    "neo-git-graph.view",
+    "neo-git-graph.clearAvatarCache",
+    "neo-git-graph.autoCenterCommitDetailsView",
+    "neo-git-graph.dateFormat",
+    "neo-git-graph.dateType",
+    "neo-git-graph.fetchAvatars",
+    "neo-git-graph.graphColours",
+    "neo-git-graph.graphStyle",
+    "neo-git-graph.initialLoadCommits",
+    "neo-git-graph.loadMoreCommits",
+    "neo-git-graph.maxDepthOfRepoSearch",
+    "neo-git-graph.showCurrentBranchByDefault",
+    "neo-git-graph.showStatusBarItem",
+    "neo-git-graph.showUncommittedChanges",
+    "neo-git-graph.tabIconColourTheme"
+  ]
+}

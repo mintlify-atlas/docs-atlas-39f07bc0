@@ -1,0 +1,458 @@
+---
+title: Tag Management  
+description: Create, delete, and push Git tags directly from the graph interface
+---
+
+## Overview
+
+Git tags allow you to mark specific points in your repository's history, typically for releases or significant milestones. Neo Git Graph provides full tag management capabilities through the graph interface.
+
+## Creating Tags
+
+### Tag Types
+
+Git supports two types of tags:
+
+<CardGroup cols={2}>
+  <Card title="Lightweight Tags" icon="bookmark">
+    Simple pointer to a commit, like a branch that doesn't change
+  </Card>
+  <Card title="Annotated Tags" icon="bookmark-plus">
+    Full objects with tagger name, email, date, and message
+  </Card>
+</CardGroup>
+
+### Creating a Tag
+
+Tag any commit from the graph:
+
+1. Right-click on a commit
+2. Select "Add Tag"
+3. Choose tag type (lightweight or annotated)
+4. Enter tag name
+5. For annotated tags, provide a message
+
+### Implementation
+
+```typescript
+// From dataSource.ts:245-260
+public addTag(
+  repo: string,
+  tagName: string,
+  commitHash: string,
+  lightweight: boolean,
+  message: string
+) {
+  let args = ["tag"];
+  if (lightweight) {
+    args.push(tagName);
+  } else {
+    args.push("-a", tagName, "-m", message);
+  }
+  args.push(commitHash);
+  return this.runGitCommandSpawn(args, repo);
+}
+```
+
+<Tabs>
+  <Tab title="Lightweight Tag">
+    ```bash
+    git tag <tag-name> <commit-hash>
+    ```
+    
+    Creates a simple reference to the commit.
+  </Tab>
+  <Tab title="Annotated Tag">
+    ```bash
+    git tag -a <tag-name> -m "<message>" <commit-hash>
+    ```
+    
+    Creates a full tag object with metadata and message.
+  </Tab>
+</Tabs>
+
+### Tag Naming Conventions
+
+<AccordionGroup>
+  <Accordion title="Semantic Versioning">
+    ```
+    v1.0.0
+    v1.2.3
+    v2.0.0-beta.1
+    ```
+    
+    Recommended for software releases following [semver.org](https://semver.org)
+  </Accordion>
+  <Accordion title="Date-Based">
+    ```
+    release-2026-03-01
+    snapshot-20260303
+    ```
+    
+    Useful for periodic snapshots or date-based releases
+  </Accordion>
+  <Accordion title="Custom Schemes">
+    ```
+    milestone-project-alpha
+    archive-before-refactor
+    stable-backup
+    ```
+    
+    Flexible naming for organizational needs
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+Tag names must follow Git reference naming rules:
+- No spaces or special characters like `~`, `^`, `:`, `?`, `*`
+- Cannot start with a dot `.` or hyphen `-`
+- Cannot end with `.lock`
+</Warning>
+
+## Deleting Tags
+
+### Local Tag Deletion
+
+Remove a tag from your local repository:
+
+```typescript
+// From dataSource.ts:262-264
+public deleteTag(repo: string, tagName: string) {
+  return this.runGitCommand("tag -d " + escapeRefName(tagName), repo);
+}
+```
+
+### Deletion Workflow
+
+<Steps>
+  <Step title="Locate Tag">
+    Find the tag in the graph (displayed on the commit it points to)
+  </Step>
+  <Step title="Open Context Menu">
+    Right-click on the tag name
+  </Step>
+  <Step title="Select Delete">
+    Choose "Delete Tag" from the menu
+  </Step>
+  <Step title="Confirm">
+    Confirm the deletion in the dialog
+  </Step>
+</Steps>
+
+<Note>
+Deleting a tag only removes the local reference. The commit remains in the repository.
+</Note>
+
+### Deleting Remote Tags
+
+<Warning>
+Git Graph only deletes local tags. To delete a remote tag, use the terminal:
+
+```bash
+git push origin --delete <tag-name>
+```
+</Warning>
+
+## Pushing Tags
+
+### Push to Remote
+
+Share tags with your team by pushing to the remote repository:
+
+```typescript
+// From dataSource.ts:266-268
+public pushTag(repo: string, tagName: string) {
+  return this.runGitCommand("push origin " + escapeRefName(tagName), repo);
+}
+```
+
+### Push Workflow
+
+1. Right-click on a tag in the graph
+2. Select "Push Tag"
+3. Tag is pushed to the `origin` remote
+4. Success/error message is displayed
+
+<CodeGroup>
+
+```bash Single Tag
+git push origin <tag-name>
+```
+
+```bash All Tags (Terminal)
+git push origin --tags
+```
+
+</CodeGroup>
+
+<Info>
+Git Graph pushes one tag at a time. To push all tags, use the Git terminal command `git push origin --tags`.
+</Info>
+
+### Push Errors
+
+Common errors when pushing tags:
+
+<AccordionGroup>
+  <Accordion title="Tag Already Exists">
+    ```
+    error: dst ref already exists  
+    ```
+    
+    Remote already has a tag with this name. Either:
+    - Delete remote tag first: `git push origin :refs/tags/<tag-name>`
+    - Use a different tag name
+    - Force push (not recommended): `git push --force origin <tag-name>`
+  </Accordion>
+  <Accordion title="Authentication Failed">
+    ```
+    error: authentication failed
+    ```
+    
+    Configure Git credentials for the remote repository
+  </Accordion>
+  <Accordion title="No Remote Configured">
+    ```
+    error: No such remote 'origin'
+    ```
+    
+    Add a remote: `git remote add origin <url>`
+  </Accordion>
+</AccordionGroup>
+
+## Tag Visualization
+
+### Graph Display
+
+Tags appear in the graph as references on commits:
+
+- **Location**: Adjacent to branch names on the commit node
+- **Icon**: Tag icon distinguishes them from branches
+- **Color**: Uses distinct styling from branch references
+- **Sorting**: Tags are sorted alphabetically when multiple tags point to the same commit
+
+### Tag Reference Types
+
+The graph displays tag information using Git's ref system:
+
+```typescript
+// From dataSource.ts:349-354
+else if (ref.startsWith("refs/tags/")) {
+  refData.refs.push({
+    hash: hash,
+    name: ref.endsWith("^{}") 
+      ? ref.substring(10, ref.length - 3)  // Annotated tag
+      : ref.substring(10),                 // Lightweight tag
+    type: "tag"
+  });
+}
+```
+
+<Tabs>
+  <Tab title="Lightweight Tags">
+    Displayed as `refs/tags/<name>` - direct reference to commit
+  </Tab>
+  <Tab title="Annotated Tags">
+    Displayed as `refs/tags/<name>^{}` - reference to tag object which points to commit
+    
+    The `^{}` suffix is automatically stripped for display
+  </Tab>
+</Tabs>
+
+## Context Menu Actions
+
+Right-clicking a tag provides these options:
+
+<CardGroup cols={2}>
+  <Card title="Checkout Tag" icon="arrow-right">
+    Checkout the commit the tag points to (detached HEAD)
+  </Card>
+  <Card title="Delete Tag" icon="trash">
+    Remove the tag from local repository
+  </Card>
+  <Card title="Push Tag" icon="cloud-upload">
+    Push the tag to origin remote
+  </Card>
+  <Card title="Copy Tag Name" icon="copy">
+    Copy tag name to clipboard
+  </Card>
+</CardGroup>
+
+## Tag Commands via Message Protocol
+
+### Request/Response Flow
+
+Tag operations use a message-based protocol:
+
+```typescript
+// From types.ts:92-103
+export interface RequestAddTag {
+  command: "addTag";
+  repo: string;
+  commitHash: string;
+  tagName: string;
+  lightweight: boolean;
+  message: string;
+}
+
+export interface ResponseAddTag {
+  command: "addTag";
+  status: GitCommandStatus;  // null on success, error string on failure
+}
+```
+
+### Response Handling
+
+```typescript
+// From gitGraphView.ts:136-146
+case "addTag":
+  this.sendMessage({
+    command: "addTag",
+    status: await this.dataSource.addTag(
+      msg.repo,
+      msg.tagName,
+      msg.commitHash,
+      msg.lightweight,
+      msg.message
+    )
+  });
+  break;
+```
+
+<Info>
+All tag operations are asynchronous and provide success/failure feedback through the message protocol.
+</Info>
+
+## Best Practices
+
+### When to Use Tags
+
+<AccordionGroup>
+  <Accordion title="Software Releases">
+    ```
+    v1.0.0 - Initial release
+    v1.1.0 - Feature update
+    v1.1.1 - Bug fix release
+    ```
+    
+    Tag every public release for easy reference and checkout
+  </Accordion>
+  <Accordion title="Milestones">
+    ```
+    milestone-mvp
+    beta-release
+    production-ready
+    ```
+    
+    Mark significant project milestones
+  </Accordion>
+  <Accordion title="Archival">
+    ```
+    archive-old-api
+    backup-before-migration
+    pre-refactor-snapshot
+    ```
+    
+    Create recovery points before major changes
+  </Accordion>
+</AccordionGroup>
+
+### Lightweight vs Annotated
+
+<Tabs>
+  <Tab title="Use Lightweight For">
+    - Temporary markers
+    - Personal bookmarks
+    - Quick local references
+    - Private development tags
+  </Tab>
+  <Tab title="Use Annotated For">
+    - Public releases
+    - Official milestones  
+    - Team-shared references
+    - Tags requiring documentation
+    
+    Annotated tags include:
+    - Tagger name and email
+    - Creation date
+    - Message/description
+    - Can be GPG signed
+  </Tab>
+</Tabs>
+
+### Tag Message Format
+
+For annotated tags, write clear, informative messages:
+
+<CodeGroup>
+
+```text Release Tag
+Release v1.2.0
+
+New Features:
+- Added user authentication
+- Improved performance by 30%
+- Dark mode support
+
+Bug Fixes:
+- Fixed memory leak in data processing
+- Corrected timezone handling
+```
+
+```text Milestone Tag  
+Beta Release Milestone
+
+First public beta with core features:
+- User management
+- Data import/export
+- Basic reporting
+
+Known issues tracked in GitHub Issues.
+```
+
+</CodeGroup>
+
+## Related Features
+
+<CardGroup cols={2}>
+  <Card title="Branch Operations" icon="code-branch" href="/features/branch-operations">
+    Manage branches alongside tags
+  </Card>
+  <Card title="Commit Details" icon="info-circle" href="/features/commit-details">
+    View full commit information for tagged commits
+  </Card>
+</CardGroup>
+
+## Common Workflows
+
+### Release Tagging
+
+<Steps>
+  <Step title="Verify Commit">
+    Ensure the release commit is correct and builds successfully
+  </Step>
+  <Step title="Create Annotated Tag">
+    Right-click commit → Add Tag → Choose "Annotated"
+  </Step>
+  <Step title="Write Release Notes">
+    Include version number, features, fixes, and breaking changes
+  </Step>
+  <Step title="Push to Remote">
+    Right-click tag → Push Tag to share with team
+  </Step>
+  <Step title="Create GitHub Release">
+    Use GitHub UI to create release from the tag
+  </Step>
+</Steps>
+
+### Moving Tags
+
+<Warning>
+Git doesn't support moving tags directly. To "move" a tag:
+
+1. Delete the old tag: `git tag -d <tag-name>`
+2. Create new tag at desired commit
+3. Force push if already on remote: `git push origin <tag-name> --force`
+
+This is **not recommended** for public tags as it can cause issues for other users.
+</Warning>

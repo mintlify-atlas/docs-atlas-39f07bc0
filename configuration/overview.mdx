@@ -1,0 +1,68 @@
+---
+title: Configuration Overview
+description: Complete guide to configuring the neo-git-graph extension settings
+---
+
+The neo-git-graph extension offers a comprehensive set of configuration options to customize your Git Graph experience. All settings are accessible through VS Code's settings UI or by editing your `settings.json` file.
+
+## All Configuration Settings
+
+Here's a complete overview of all available settings:
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `neo-git-graph.dateFormat` | string | `"Date & Time"` | Specifies the date format in the date column |
+| `neo-git-graph.dateType` | string | `"Author Date"` | Specifies the date type (Author Date or Commit Date) |
+| `neo-git-graph.graphColours` | array | 12 colors | Specifies the colours used on the graph |
+| `neo-git-graph.graphStyle` | string | `"rounded"` | Specifies the style of the graph (rounded or angular) |
+| `neo-git-graph.tabIconColourTheme` | string | `"colour"` | Specifies the colour theme of the tab icon |
+| `neo-git-graph.autoCenterCommitDetailsView` | boolean | `true` | Automatically center the commit details view when opened |
+| `neo-git-graph.showStatusBarItem` | boolean | `true` | Show a Status Bar item which opens Git Graph |
+| `neo-git-graph.initialLoadCommits` | number | `300` | Number of commits to initially load |
+| `neo-git-graph.loadMoreCommits` | number | `100` | Number of commits to load when "Load More" is pressed |
+| `neo-git-graph.showUncommittedChanges` | boolean | `true` | Show uncommitted changes |
+| `neo-git-graph.maxDepthOfRepoSearch` | number | `0` | Maximum depth of subfolders when discovering repositories |
+| `neo-git-graph.fetchAvatars` | boolean | `false` | Fetch avatars of commit authors and committers |
+| `neo-git-graph.showCurrentBranchByDefault` | boolean | `false` | Show only the current branch when Git Graph is opened |
+
+## Configuration Categories
+
+Settings are organized into two main categories:
+
+<CardGroup cols={2}>
+  <Card title="Display Settings" icon="palette" href="/configuration/display-settings">
+    Customize the visual appearance of your Git Graph, including date formats, graph colors, and UI elements.
+  </Card>
+  
+  <Card title="Performance Settings" icon="gauge-high" href="/configuration/performance-settings">
+    Optimize performance for large repositories by controlling commit loading and repository scanning.
+  </Card>
+</CardGroup>
+
+## How to Configure
+
+You can configure neo-git-graph in two ways:
+
+### Via Settings UI
+
+1. Open VS Code Settings (`Cmd/Ctrl + ,`)
+2. Search for "neo-git-graph"
+3. Modify the desired settings
+
+### Via settings.json
+
+1. Open the Command Palette (`Cmd/Ctrl + Shift + P`)
+2. Type "Preferences: Open Settings (JSON)"
+3. Add your configuration:
+
+```json
+{
+  "neo-git-graph.dateFormat": "Relative",
+  "neo-git-graph.graphStyle": "angular",
+  "neo-git-graph.initialLoadCommits": 500
+}
+```
+
+<Info>
+  All settings are prefixed with `neo-git-graph.` to avoid conflicts with other extensions.
+</Info>

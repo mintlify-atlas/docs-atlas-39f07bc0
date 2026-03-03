@@ -1,0 +1,190 @@
+---
+title: Installation
+description: Install (neo) Git Graph from VS Code Marketplace or Open VSX Registry
+---
+
+(neo) Git Graph is available on both the VS Code Marketplace and Open VSX Registry, making it accessible in Visual Studio Code, VSCodium, and other VS Code-compatible editors.
+
+## Prerequisites
+
+<Note>
+  (neo) Git Graph requires **VS Code 1.98.0** or later and **Git** installed on your system.
+</Note>
+
+Before installing the extension, ensure you have:
+
+1. **Visual Studio Code** (version 1.98.0 or higher)
+2. **Git** installed and available in your PATH
+
+### Verify Git Installation
+
+Check if Git is installed by running:
+
+```bash
+git --version
+```
+
+If Git is not installed, download it from [git-scm.com](https://git-scm.com/downloads).
+
+<Tip>
+  If you're using a portable Git installation, configure the `git.path` setting in VS Code to point to your Git executable (e.g., `C:\\Program Files\\Git\\bin\\git.exe` on Windows).
+</Tip>
+
+## Installation Methods
+
+<Tabs>
+  <Tab title="VS Code Marketplace">
+    ### Install from VS Code Marketplace
+
+    The easiest way to install (neo) Git Graph in Visual Studio Code:
+
+    <Steps>
+      <Step title="Open Extensions View">
+        Press `Ctrl+Shift+X` (Windows/Linux) or `Cmd+Shift+X` (macOS) to open the Extensions view
+      </Step>
+      
+      <Step title="Search for Extension">
+        Type `neo-git-graph` in the search box
+      </Step>
+      
+      <Step title="Install">
+        Click the **Install** button on the extension published by **asispts**
+      </Step>
+      
+      <Step title="Verify Installation">
+        After installation, you should see a Git Graph icon in your status bar (if enabled in settings)
+      </Step>
+    </Steps>
+
+    <Card title="VS Code Marketplace" icon="link" href="https://marketplace.visualstudio.com/items?itemName=asispts.neo-git-graph">
+      Install directly from the marketplace website
+    </Card>
+
+    ### Command Line Installation
+
+    You can also install via the command line:
+
+    ```bash
+    code --install-extension asispts.neo-git-graph
+    ```
+  </Tab>
+  
+  <Tab title="Open VSX Registry">
+    ### Install from Open VSX
+
+    For VSCodium and other Open VSX-compatible editors:
+
+    <Steps>
+      <Step title="Open Extensions View">
+        Press `Ctrl+Shift+X` (Windows/Linux) or `Cmd+Shift+X` (macOS)
+      </Step>
+      
+      <Step title="Search for Extension">
+        Type `neo-git-graph` in the search box
+      </Step>
+      
+      <Step title="Install">
+        Click **Install** on the extension by **asispts**
+      </Step>
+    </Steps>
+
+    <Card title="Open VSX Registry" icon="link" href="https://open-vsx.org/extension/asispts/neo-git-graph">
+      View on Open VSX Registry
+    </Card>
+
+    ### Command Line Installation
+
+    For VSCodium:
+
+    ```bash
+    codium --install-extension asispts.neo-git-graph
+    ```
+  </Tab>
+  
+  <Tab title="Manual Installation">
+    ### Install from VSIX File
+
+    Download and install the extension manually:
+
+    <Steps>
+      <Step title="Download VSIX">
+        Download the latest `.vsix` file from the [GitHub Releases](https://github.com/asispts/neo-git-graph/releases) page
+      </Step>
+      
+      <Step title="Open Extensions View">
+        Press `Ctrl+Shift+X` (Windows/Linux) or `Cmd+Shift+X` (macOS)
+      </Step>
+      
+      <Step title="Install from VSIX">
+        Click the `...` menu at the top of the Extensions view and select **Install from VSIX...**
+      </Step>
+      
+      <Step title="Select File">
+        Navigate to the downloaded `.vsix` file and click **Install**
+      </Step>
+    </Steps>
+
+    ### Command Line Installation
+
+    ```bash
+    code --install-extension /path/to/neo-git-graph-*.vsix
+    ```
+  </Tab>
+</Tabs>
+
+## Verify Installation
+
+After installation, verify that (neo) Git Graph is working:
+
+<Steps>
+  <Step title="Open a Git Repository">
+    Open a folder containing a Git repository in VS Code
+  </Step>
+  
+  <Step title="Open Command Palette">
+    Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (macOS)
+  </Step>
+  
+  <Step title="Run Git Graph Command">
+    Type `Git Graph: View Git Graph` and press Enter
+  </Step>
+  
+  <Step title="Confirm Graph Appears">
+    You should see the Git Graph view with your repository's commit history
+  </Step>
+</Steps>
+
+<Tip>
+  If you see "Unable to load Git Graph", check that:
+  - You're in a Git repository
+  - Git is installed and accessible in your PATH
+  - The `git.path` setting points to your Git executable (for portable installations)
+</Tip>
+
+## Configuration
+
+The extension works out of the box with sensible defaults. You can customize it by opening Settings (`Ctrl+,` or `Cmd+,`) and searching for `neo-git-graph`.
+
+Some useful initial settings:
+
+```json settings.json
+{
+  // Show Git Graph button in status bar
+  "neo-git-graph.showStatusBarItem": true,
+  
+  // Number of commits to load initially
+  "neo-git-graph.initialLoadCommits": 300,
+  
+  // Show uncommitted changes in the graph
+  "neo-git-graph.showUncommittedChanges": true,
+  
+  // Date format preference
+  "neo-git-graph.dateFormat": "Date & Time"
+}
+```
+
+## Next Steps
+
+<Card title="Quick Start Guide" icon="rocket" href="/quickstart">
+  Learn how to use (neo) Git Graph to view and manage your Git history
+</Card>

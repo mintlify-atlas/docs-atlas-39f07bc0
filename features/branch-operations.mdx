@@ -1,0 +1,389 @@
+---
+title: Branch Operations
+description: Create, checkout, rename, delete, and merge branches directly from the Git Graph interface
+---
+
+## Overview
+
+Neo Git Graph provides comprehensive branch management capabilities directly from the graph interface. All operations are executed using Git commands and reflect immediately in the graph view.
+
+## Creating Branches
+
+### From Any Commit
+
+Create a new branch pointing to any commit in the graph:
+
+1. Right-click on a commit
+2. Select "Create Branch"
+3. Enter branch name
+4. Branch is created at the selected commit
+
+### Implementation
+
+```typescript
+// From dataSource.ts:270-272
+public createBranch(repo: string, branchName: string, commitHash: string) {
+  return this.runGitCommand(
+    "branch " + escapeRefName(branchName) + " " + commitHash, 
+    repo
+  );
+}
+```
+
+<Info>
+Branch names are automatically escaped to handle special characters safely.
+</Info>
+
+### Naming Rules
+
+Git branch names must follow these rules:
+- Cannot contain `..`, `~`, `^`, `:`, `?`, `*`, `[`
+- Cannot start or end with `/`
+- Cannot end with `.lock`
+- Cannot contain consecutive slashes `//`
+
+<Warning>
+The extension validates branch names before executing the Git command. Invalid names will show an error message.
+</Warning>
+
+## Checking Out Branches
+
+### Local Branches
+
+Checkout an existing local branch:
+
+```typescript
+// From dataSource.ts:274-282
+public checkoutBranch(repo: string, branchName: string, remoteBranch: string | null) {
+  return this.runGitCommand(
+    "checkout " + (remoteBranch === null 
+      ? escapeRefName(branchName)
+      : " -b " + escapeRefName(branchName) + " " + escapeRefName(remoteBranch)
+    ),
+    repo
+  );
+}
+```
+
+### Remote Branches
+
+Checkout a remote branch to create a local tracking branch:
+
+1. Enable "Show Remote Branches"
+2. Right-click on remote branch
+3. Select "Checkout Branch"
+4. Local branch is created and set to track remote
+
+<CodeGroup>
+
+```bash Local Branch
+git checkout <branch-name>
+```
+
+```bash Remote Branch
+git checkout -b <branch-name> <remote>/<branch-name>
+```
+
+</CodeGroup>
+
+### Checkout Commit (Detached HEAD)
+
+Checkout a specific commit to enter detached HEAD state:
+
+```typescript
+// From dataSource.ts:284-286  
+public checkoutCommit(repo: string, commitHash: string) {
+  return this.runGitCommand("checkout " + commitHash, repo);
+}
+```
+
+<Warning>
+Detached HEAD state means you're not on any branch. New commits won't belong to a branch unless you create one.
+</Warning>
+
+## Renaming Branches
+
+### Local Branch Rename
+
+Rename any local branch:
+
+```typescript
+// From dataSource.ts:295-299
+public renameBranch(repo: string, oldName: string, newName: string) {
+  return this.runGitCommand(
+    "branch -m " + escapeRefName(oldName) + " " + escapeRefName(newName),
+    repo
+  );
+}
+```
+
+<Tabs>
+  <Tab title="Via Context Menu">
+    1. Right-click on branch ref in graph
+    2. Select "Rename Branch"
+    3. Enter new name
+    4. Press Enter to confirm
+  </Tab>
+  <Tab title="Git Command">
+    ```bash
+    git branch -m <old-name> <new-name>
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+Renaming a branch updates all local references but does not affect remote branches.
+</Note>
+
+## Deleting Branches
+
+### Safe Delete
+
+Delete a branch that has been fully merged:
+
+```typescript
+// From dataSource.ts:288-292 (forceDelete: false)
+public deleteBranch(repo: string, branchName: string, forceDelete: boolean) {
+  return this.runGitCommand(
+    "branch --delete" + (forceDelete ? " --force" : "") + " " + escapeRefName(branchName),
+    repo
+  );
+}
+```
+
+### Force Delete
+
+Delete a branch even if it hasn't been merged:
+
+<Warning>
+Force delete will permanently remove the branch pointer. Commits may become unreachable if not merged elsewhere.
+</Warning>
+
+<CodeGroup>
+
+```bash Safe Delete
+git branch --delete <branch-name>
+```
+
+```bash Force Delete
+git branch --delete --force <branch-name>
+```
+
+</CodeGroup>
+
+### Deletion Workflow
+
+1. Right-click on branch in graph
+2. Select "Delete Branch"
+3. Choose delete mode:
+   - **Normal**: Only if merged
+   - **Force**: Delete regardless of merge status
+4. Confirm deletion
+
+<Accordion title="What happens to commits?">
+Deleting a branch only removes the branch pointer. Commits remain in the repository and are visible in Git Graph if:
+- They're reachable from other branches
+- They're within the graph's commit load range
+- "Show all branches" is enabled
+
+Orphaned commits will eventually be garbage collected by Git.
+</Accordion>
+
+## Merging Branches
+
+### Merge Branch into Current
+
+Merge any branch into your current branch:
+
+```typescript
+// From dataSource.ts:302-307
+public mergeBranch(repo: string, branchName: string, createNewCommit: boolean) {
+  return this.runGitCommand(
+    "merge " + escapeRefName(branchName) + (createNewCommit ? " --no-ff" : ""),
+    repo
+  );
+}
+```
+
+### Merge Options
+
+<Tabs>
+  <Tab title="Fast-Forward (Default)">
+    If possible, move branch pointer forward without creating merge commit:
+    ```bash
+    git merge <branch-name>
+    ```
+    
+    Creates a linear history when merging branches that are direct descendants.
+  </Tab>
+  <Tab title="No Fast-Forward">
+    Always create a merge commit, even if fast-forward is possible:
+    ```bash
+    git merge --no-ff <branch-name>
+    ```
+    
+    Preserves branch topology and merge history.
+  </Tab>
+</Tabs>
+
+### Merge Commit
+
+Merge a specific commit into current branch:
+
+```typescript
+// From dataSource.ts:309-311
+public mergeCommit(repo: string, commitHash: string, createNewCommit: boolean) {
+  return this.runGitCommand(
+    "merge " + commitHash + (createNewCommit ? " --no-ff" : ""), 
+    repo
+  );
+}
+```
+
+### Merge Conflicts
+
+<Steps>
+  <Step title="Conflict Detection">
+    If merge conflicts occur, Git Graph shows the error message from Git
+  </Step>
+  <Step title="Manual Resolution">
+    Resolve conflicts using VS Code's merge conflict editor
+  </Step>
+  <Step title="Stage Changes">
+    Stage resolved files using Source Control view
+  </Step>
+  <Step title="Complete Merge">
+    Commit the merge using `git commit` or VS Code Source Control
+  </Step>
+  <Step title="Refresh Graph">
+    Click "Refresh" button to update the graph
+  </Step>
+</Steps>
+
+<Warning>
+Git Graph does not automatically refresh after merge conflicts. Click the refresh button to see the current state.
+</Warning>
+
+## Branch Visualization
+
+### Branch Colors
+
+Branches are automatically assigned colors from the configured palette:
+
+```json
+{
+  "neo-git-graph.graphColours": [
+    "#0085d9", "#d9008f", "#00d90a", // ...
+  ]
+}
+```
+
+### Remote Branches
+
+Toggle remote branch visibility:
+
+<CardGroup cols={2}>
+  <Card title="Show Remote Branches" icon="toggle-on">
+    Enable the checkbox to display remote tracking branches in the graph
+  </Card>
+  <Card title="Hide Remote Branches" icon="toggle-off">
+    Disable to show only local branches and tags
+  </Card>
+</CardGroup>
+
+## Branch Filtering
+
+### View Specific Branch
+
+Use the branch dropdown to filter commits:
+
+1. Click "Branch" dropdown
+2. Select a branch name
+3. Graph shows only commits reachable from that branch
+
+### Default View
+
+Configure which branches are shown by default:
+
+```json
+{
+  "neo-git-graph.showCurrentBranchByDefault": true
+}
+```
+
+<Tabs>
+  <Tab title="Current Branch Only">
+    Show only the currently checked out branch when opening Git Graph
+  </Tab>
+  <Tab title="All Branches (Default)">
+    Show all branches and tags when opening Git Graph
+  </Tab>
+</Tabs>
+
+## Error Handling
+
+All branch operations provide feedback:
+
+<AccordionGroup>
+  <Accordion title="Success">
+    Operation completes silently and graph refreshes automatically
+  </Accordion>
+  <Accordion title="Git Error">
+    Error message from Git is displayed in a notification:
+    - Branch name conflicts
+    - Merge conflicts
+    - Uncommitted changes preventing checkout
+    - Protected branch restrictions
+  </Accordion>
+  <Accordion title="Network Error">
+    For operations involving remotes, network errors are caught and displayed
+  </Accordion>
+</AccordionGroup>
+
+## Repository File Watching
+
+Git Graph watches for file system changes:
+
+```typescript
+// From gitGraphView.ts:117-121
+this.repoFileWatcher = new RepoFileWatcher(() => {
+  if (this.panel.visible) {
+    this.sendMessage({ command: "refresh" });
+  }
+});
+```
+
+<Info>
+When `.git/` directory changes are detected, the graph automatically refreshes to reflect new commits, branches, or tags.
+</Info>
+
+## Related Features
+
+<CardGroup cols={2}>
+  <Card title="Tag Management" icon="tag" href="/features/tag-management">
+    Create and manage tags alongside branches
+  </Card>
+  <Card title="Multi-Repo Support" icon="folder-tree" href="/features/multi-repo">
+    Switch between multiple repositories
+  </Card>
+</CardGroup>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Before Deleting">
+    - Verify branch is merged or obsolete
+    - Check if others are using the branch
+    - Consider archiving with tags instead
+  </Accordion>
+  <Accordion title="Merge Strategy">
+    - Use `--no-ff` for feature branches to preserve history
+    - Use fast-forward for simple updates
+    - Communicate merge strategy with your team
+  </Accordion>
+  <Accordion title="Branch Naming">
+    - Use consistent naming conventions
+    - Include ticket/issue numbers
+    - Prefix by type: `feature/`, `bugfix/`, `hotfix/`
+  </Accordion>
+</AccordionGroup>

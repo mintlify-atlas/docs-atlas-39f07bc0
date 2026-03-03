@@ -1,0 +1,535 @@
+---
+title: Multiple Repository Support
+description: Work with multiple Git repositories in a single workspace with automatic discovery and switching
+---
+
+## Overview
+
+Neo Git Graph supports workspaces containing multiple Git repositories. The extension automatically discovers repositories in your workspace and provides a dropdown to switch between them.
+
+## Repository Discovery
+
+### Automatic Scanning
+
+When VS Code opens, the extension scans workspace folders for Git repositories:
+
+```typescript
+// From repoManager.ts:187-201
+private async searchWorkspaceForRepos() {
+  let rootFolders = vscode.workspace.workspaceFolders,
+    changes = false;
+  if (typeof rootFolders !== "undefined") {
+    for (let i = 0; i < rootFolders.length; i++) {
+      if (await this.searchDirectoryForRepos(
+          getPathFromUri(rootFolders[i].uri),
+          this.maxDepthOfRepoSearch
+        )
+      ) changes = true;
+    }
+  }
+  if (changes) this.sendRepos();
+}
+```
+
+### Search Depth
+
+Configure how deep the extension searches for repositories:
+
+```json
+{
+  "neo-git-graph.maxDepthOfRepoSearch": 0
+}
+```
+
+<Tabs>
+  <Tab title="0 - Workspace Root Only (Default)">
+    Only checks if workspace folders themselves are Git repositories
+    
+    **Example**:
+    ```
+    workspace/
+    ├── .git/          ← Found
+    ├── project-a/
+    │   └── .git/      ← Not found
+    └── project-b/
+        └── .git/      ← Not found
+    ```
+  </Tab>
+  <Tab title="1 - One Level Deep">
+    Searches workspace root and immediate subdirectories
+    
+    **Example**:
+    ```
+    workspace/
+    ├── project-a/
+    │   └── .git/      ← Found
+    ├── project-b/
+    │   └── .git/      ← Found
+    └── docs/
+        └── subproject/
+            └── .git/  ← Not found
+    ```
+  </Tab>
+  <Tab title="2+ - Multi-Level">
+    Recursively searches to specified depth
+    
+    **Example** (depth=2):
+    ```
+    workspace/
+    ├── project-a/
+    │   └── .git/      ← Found
+    ├── vendors/
+    │   └── library/
+    │       └── .git/  ← Found
+    └── deep/
+        └── nested/
+            └── repo/
+                └── .git/  ← Not found (depth 3)
+    ```
+  </Tab>
+</Tabs>
+
+<Warning>
+Increasing search depth can slow down VS Code startup for large workspaces with many directories.
+</Warning>
+
+## Repository Switching
+
+### Using the Dropdown
+
+<Steps>
+  <Step title="Open Git Graph">
+    Click the Git Graph status bar item or run the command
+  </Step>
+  <Step title="Locate Repository Dropdown">
+    Find "Repo:" dropdown at the top-left of the graph view
+  </Step>
+  <Step title="Select Repository">
+    Click the dropdown and choose from discovered repositories
+  </Step>
+  <Step title="View Updates">
+    Graph immediately loads commits from the selected repository
+  </Step>
+</Steps>
+
+### Last Active Repository
+
+The extension remembers your last viewed repository:
+
+```typescript
+// From gitGraphView.ts:222-225
+if (msg.repo !== this.currentRepo) {
+  this.currentRepo = msg.repo;
+  this.extensionState.setLastActiveRepo(msg.repo);
+  this.repoFileWatcher.start(msg.repo);
+}
+```
+
+<Info>
+When reopening Git Graph, the last active repository is automatically selected.
+</Info>
+
+## Repository State Persistence
+
+### Per-Repository Settings
+
+Each repository maintains its own state:
+
+```typescript
+// From types.ts:44-47
+export interface GitRepoState {
+  columnWidths: number[] | null;
+}
+
+export type GitRepoSet = { [repo: string]: GitRepoState };
+```
+
+**Persisted State**:
+- Column widths in the commit table
+- View preferences (future features)
+
+### Saving State
+
+```typescript
+// From repoManager.ts:181-184
+public setRepoState(repo: string, state: GitRepoState) {
+  this.repos[repo] = state;
+  this.extensionState.saveRepos(this.repos);
+}
+```
+
+<Note>
+State is saved automatically when you adjust column widths or close the Git Graph view.
+</Note>
+
+## File System Watching
+
+### Automatic Repository Detection
+
+The extension watches workspace folders for new repositories:
+
+```typescript
+// From repoManager.ts:257-263
+private startWatchingFolder(path: string) {
+  let watcher = vscode.workspace.createFileSystemWatcher(path + "/**");
+  watcher.onDidCreate((uri) => this.onWatcherCreate(uri));
+  watcher.onDidChange((uri) => this.onWatcherChange(uri));
+  watcher.onDidDelete((uri) => this.onWatcherDelete(uri));
+  this.folderWatchers[path] = watcher;
+}
+```
+
+### Detection Events
+
+<AccordionGroup>
+  <Accordion title="Repository Created">
+    When a new `.git` directory is detected:
+    ```typescript
+    // From repoManager.ts:268-276
+    private async onWatcherCreate(uri: vscode.Uri) {
+      let path = getPathFromUri(uri);
+      if (path.indexOf("/.git/") > -1) return;
+      if (path.endsWith("/.git")) path = path.slice(0, -5);
+      
+      this.createEventPaths.push(path);
+      setTimeout(() => this.processCreateEvents(), 1000);
+    }
+    ```
+    
+    Repository is automatically added to the dropdown
+  </Accordion>
+  <Accordion title="Repository Deleted">
+    When a `.git` directory is removed:
+    ```typescript
+    private onWatcherDelete(uri: vscode.Uri) {
+      let path = getPathFromUri(uri);
+      if (this.removeReposWithinFolder(path)) this.sendRepos();
+    }
+    ```
+    
+    Repository is removed from the dropdown
+  </Accordion>
+  <Accordion title="Repository Changed">
+    When `.git` directory is modified:
+    - Validates repository still exists
+    - Updates repository list if needed
+  </Accordion>
+</AccordionGroup>
+
+## Workspace Folder Management
+
+### Adding Folders
+
+When workspace folders are added:
+
+```typescript
+// From repoManager.ts:39-49
+this.folderChangeHandler = vscode.workspace.onDidChangeWorkspaceFolders(async (e) => {
+  if (e.added.length > 0) {
+    let path, changes = false;
+    for (let i = 0; i < e.added.length; i++) {
+      path = getPathFromUri(e.added[i].uri);
+      if (await this.searchDirectoryForRepos(path, this.maxDepthOfRepoSearch)) 
+        changes = true;
+      this.startWatchingFolder(path);
+    }
+    if (changes) this.sendRepos();
+  }
+});
+```
+
+<Steps>
+  <Step title="Folder Added to Workspace">
+    User adds folder via File > Add Folder to Workspace
+  </Step>
+  <Step title="Repository Search">
+    Extension searches for Git repositories in the new folder
+  </Step>
+  <Step title="File Watching Started">
+    File system watcher monitors the folder for future changes
+  </Step>
+  <Step title="Dropdown Updated">
+    Any discovered repositories appear in the dropdown
+  </Step>
+</Steps>
+
+### Removing Folders
+
+When workspace folders are removed:
+
+```typescript
+// From repoManager.ts:50-59
+if (e.removed.length > 0) {
+  let changes = false, path;
+  for (let i = 0; i < e.removed.length; i++) {
+    path = getPathFromUri(e.removed[i].uri);
+    if (this.removeReposWithinFolder(path)) changes = true;
+    this.stopWatchingFolder(path);
+  }
+  if (changes) this.sendRepos();
+}
+```
+
+Repositories within removed folders are automatically cleaned up.
+
+## Repository Validation
+
+### Existence Checking
+
+The extension periodically validates that repositories still exist:
+
+```typescript
+// From repoManager.ts:163-180
+public checkReposExist() {
+  return new Promise<boolean>((resolve) => {
+    let repoPaths = Object.keys(this.repos), changes = false;
+    evalPromises(repoPaths, 3, (path) => 
+      this.dataSource.isGitRepository(path)
+    ).then((results) => {
+      for (let i = 0; i < repoPaths.length; i++) {
+        if (!results[i]) {
+          this.removeRepo(repoPaths[i]);
+          changes = true;
+        }
+      }
+      if (changes) this.sendRepos();
+      resolve(changes);
+    });
+  });
+}
+```
+
+**Validation Method**:
+```bash
+git rev-parse --git-dir
+```
+
+<Info>
+Validation runs when:
+- Git Graph is opened
+- Workspace folders change
+- Manual refresh is triggered
+</Info>
+
+## Multi-Repo Workflows
+
+### Monorepo Support
+
+<Tabs>
+  <Tab title="Single Repository">
+    ```
+    monorepo/
+    ├── .git/
+    ├── frontend/
+    ├── backend/
+    └── shared/
+    ```
+    
+    One repository in dropdown, shows all commits
+  </Tab>
+  <Tab title="Multiple Repositories">
+    ```
+    workspace/
+    ├── frontend/
+    │   └── .git/
+    ├── backend/
+    │   └── .git/
+    └── shared/
+        └── .git/
+    ```
+    
+    Three repositories in dropdown, switch between them
+  </Tab>
+</Tabs>
+
+### Workspace Recommendations
+
+<AccordionGroup>
+  <Accordion title="Small Number of Repos (1-5)">
+    - Use default search depth of 0-1
+    - All repositories easily accessible
+    - Minimal performance impact
+  </Accordion>
+  <Accordion title="Many Repositories (5+)">
+    - Consider organizing into separate workspaces
+    - Or use VS Code multi-root workspaces
+    - Limit search depth to avoid scanning overhead
+  </Accordion>
+  <Accordion title="Nested Repositories">
+    - Increase search depth as needed
+    - Be aware of performance impact
+    - Consider if nesting is necessary (e.g., git submodules)
+  </Accordion>
+</AccordionGroup>
+
+## Status Bar Integration
+
+### Repository Count
+
+The status bar shows the number of discovered repositories:
+
+```typescript
+// From repoManager.ts:157-162
+private sendRepos() {
+  let repos = this.getRepos();
+  let numRepos = Object.keys(repos).length;
+  this.statusBarItem.setNumRepos(numRepos);
+  if (this.viewCallback !== null) this.viewCallback(repos, numRepos);
+}
+```
+
+<CardGroup cols={3}>
+  <Card title="No Repositories" icon="circle-xmark">
+    Status bar item hidden or shows warning
+  </Card>
+  <Card title="One Repository" icon="circle-check">
+    Status bar shows Git Graph icon, no count
+  </Card>
+  <Card title="Multiple Repositories" icon="layer-group">
+    Status bar shows count: "Git Graph (3)"
+  </Card>
+</CardGroup>
+
+## Repository Removal
+
+### When Repositories Are Removed
+
+<Steps>
+  <Step title="No Longer in Workspace">
+    Repository path is not under any workspace folder
+  </Step>
+  <Step title=".git Directory Deleted">
+    Repository's `.git` directory was deleted or moved
+  </Step>
+  <Step title="Workspace Folder Removed">
+    Folder containing repository was removed from workspace
+  </Step>
+  <Step title="Validation Failure">
+    `git rev-parse --git-dir` returns an error
+  </Step>
+</Steps>
+
+### Cleanup Process
+
+```typescript
+// From repoManager.ts:134-137
+private removeRepo(repo: string) {
+  delete this.repos[repo];
+  this.extensionState.saveRepos(this.repos);
+}
+```
+
+<Note>
+Removing a repository from the dropdown does not delete the repository from disk, only from the extension's tracking list.
+</Note>
+
+## Performance Optimization
+
+### Parallel Repository Search
+
+Repository searching uses promise-based concurrency:
+
+```typescript
+// From repoManager.ts:231-237
+resolve(
+  (await evalPromises(dirs, 2, (dir) =>
+    this.searchDirectoryForRepos(dir, maxDepth - 1)
+  )).indexOf(true) > -1
+);
+```
+
+**Concurrency**: 2 directories searched simultaneously
+
+### Debouncing File System Events
+
+File system events are debounced to avoid excessive processing:
+
+```typescript
+// From repoManager.ts:274-276
+this.createEventPaths.push(path);
+if (this.processCreateEventsTimeout !== null) 
+  clearTimeout(this.processCreateEventsTimeout);
+this.processCreateEventsTimeout = setTimeout(() => 
+  this.processCreateEvents(), 1000
+);
+```
+
+**Debounce delay**: 1000ms (1 second)
+
+## Troubleshooting
+
+### Repository Not Detected
+
+<AccordionGroup>
+  <Accordion title="Check Search Depth">
+    Repository may be nested deeper than `maxDepthOfRepoSearch` setting
+    
+    Increase the depth:
+    ```json
+    {
+      "neo-git-graph.maxDepthOfRepoSearch": 2
+    }
+    ```
+  </Accordion>
+  <Accordion title="Invalid Git Repository">
+    Verify `.git` directory exists and is valid:
+    ```bash
+    cd /path/to/repo
+    git status
+    ```
+  </Accordion>
+  <Accordion title="Not in Workspace">
+    Ensure repository is within a VS Code workspace folder
+  </Accordion>
+  <Accordion title="File Watcher Limits">
+    On Linux, you may hit inotify limits with many repositories:
+    ```bash
+    echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf
+    sudo sysctl -p
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### Repository Disappeared
+
+<Steps>
+  <Step title="Check if Deleted">
+    Verify `.git` directory still exists on disk
+  </Step>
+  <Step title="Reload Window">
+    Try reloading VS Code window (Cmd/Ctrl + R)
+  </Step>
+  <Step title="Re-add Folder">
+    Remove and re-add workspace folder
+  </Step>
+  <Step title="Manual Validation">
+    Close and reopen Git Graph to trigger validation
+  </Step>
+</Steps>
+
+## Related Settings
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `maxDepthOfRepoSearch` | `number` | `0` | How deep to search for repositories |
+| `showStatusBarItem` | `boolean` | `true` | Show Git Graph in status bar |
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Organize Repositories">
+    - Group related repositories in workspace folders
+    - Use descriptive folder names
+    - Consider VS Code multi-root workspaces for complex setups
+  </Accordion>
+  <Accordion title="Optimize Search">
+    - Keep search depth as low as possible
+    - Place repositories at predictable depths
+    - Avoid deep nesting when not necessary
+  </Accordion>
+  <Accordion title="Large Workspaces">
+    - Limit to 10-20 repositories per workspace
+    - Use multiple VS Code windows for more repositories
+    - Consider workspace file organization
+  </Accordion>
+</AccordionGroup>

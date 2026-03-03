@@ -1,0 +1,123 @@
+---
+title: Introduction
+description: View your Git history as a beautiful graph with Git actions and devcontainer support
+---
+
+(neo) Git Graph is a powerful Visual Studio Code extension that visualizes your Git repository history as an interactive graph. Built on the last MIT-licensed commit of the original Git Graph project, it adds modern improvements including devcontainer support and enhanced maintainability.
+
+## Why (neo) Git Graph?
+
+The original [Git Graph](https://github.com/mhutchie/vscode-git-graph) by mhutchie changed its license in May 2019. Everything after [commit 4af8583](https://github.com/mhutchie/vscode-git-graph/commit/4af8583a42082b2c230d2c0187d4eaff4b69c665) is no longer MIT licensed.
+
+This fork maintains the MIT license while adding:
+
+- **MIT License**: Keeps the permissive MIT license for commercial and open-source use
+- **Devcontainer Support**: Works seamlessly in remote and container environments
+- **Improved Codebase**: Modern tooling, better maintainability, and active development
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Interactive Graph View" icon="diagram-project">
+    Visualize branches, tags, and uncommitted changes in a single comprehensive graph with customizable colors and styles
+  </Card>
+  
+  <Card title="Detailed Commit Inspection" icon="magnifying-glass">
+    Click any commit to see its message, changed files, and diffs in an intuitive side panel
+  </Card>
+  
+  <Card title="Branch Management" icon="code-branch">
+    Create, checkout, rename, delete, and merge branches directly from the graph view
+  </Card>
+  
+  <Card title="Git Actions" icon="bolt">
+    Perform checkout, cherry-pick, revert, and reset operations with a visual interface
+  </Card>
+  
+  <Card title="Tag Operations" icon="tag">
+    Create lightweight or annotated tags, delete tags, and push them to remote repositories
+  </Card>
+  
+  <Card title="Avatar Support" icon="user-circle">
+    Optional avatar fetching from GitHub, GitLab, or Gravatar to personalize your commit history
+  </Card>
+  
+  <Card title="Multi-Repository" icon="folder-tree">
+    Work with multiple repositories in a single workspace with easy repository switching
+  </Card>
+  
+  <Card title="Devcontainer Ready" icon="docker">
+    Full support for VS Code Remote Development and devcontainers
+  </Card>
+</CardGroup>
+
+## What You Can Do
+
+### Visualize Your Repository
+
+View your entire Git history with:
+- Color-coded branch lines (12 customizable colors)
+- Rounded or angular graph styles
+- Commit messages, authors, and dates
+- Uncommitted changes indicator
+- Remote branch visualization
+
+### Execute Git Operations
+
+Perform common Git actions without leaving the graph:
+
+**Branch Operations**
+- Create new branches from any commit
+- Switch between branches
+- Rename and delete branches
+- Merge branches with or without fast-forward
+
+**Commit Operations**
+- Checkout specific commits
+- Cherry-pick commits between branches
+- Revert commits
+- Reset to any commit (soft, mixed, or hard)
+
+**Tag Operations**
+- Create lightweight or annotated tags
+- Delete tags locally
+- Push tags to remote repositories
+
+### Inspect Changes
+
+- View detailed commit information
+- See all files changed in each commit
+- Open side-by-side diffs for any file
+- Copy commit hashes, messages, and file paths
+
+## Perfect For
+
+<CardGroup cols={2}>
+  <Card title="Visual Learners">
+    Understand complex Git histories and branch structures at a glance
+  </Card>
+  
+  <Card title="Team Collaboration">
+    Track contributions across your team with avatar support and detailed commit info
+  </Card>
+  
+  <Card title="Code Reviews">
+    Quickly navigate commit history and inspect changes during reviews
+  </Card>
+  
+  <Card title="Remote Development">
+    Full support for devcontainers and remote VS Code instances
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Install from VS Code Marketplace or Open VSX
+  </Card>
+  
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    View your first Git graph in under 2 minutes
+  </Card>
+</CardGroup>

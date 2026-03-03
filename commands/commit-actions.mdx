@@ -1,0 +1,152 @@
+---
+title: Commit Actions
+description: Operations for checking out, cherry-picking, reverting, resetting, and merging commits
+---
+
+Commit actions provide powerful operations for manipulating individual commits in your Git history. These operations allow you to navigate to specific commits, apply changes selectively, and modify your branch's history.
+
+## Checkout Commit
+
+Checkout a specific commit, entering a "detached HEAD" state.
+
+**Command:** `checkoutCommit`
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `repo` | `string` | Yes | Path to the Git repository |
+| `commitHash` | `string` | Yes | Hash of the commit to check out |
+
+### Implementation
+
+Executes: `git checkout <commitHash>`
+
+### Response
+
+Returns a status indicating success (`null`) or an error message if the operation failed.
+
+<Warning>
+This puts your repository in a "detached HEAD" state. To make changes permanent, create a new branch from this commit.
+</Warning>
+
+---
+
+## Cherry-pick Commit
+
+Apply the changes from a specific commit to the current branch.
+
+**Command:** `cherrypickCommit`
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `repo` | `string` | Yes | Path to the Git repository |
+| `commitHash` | `string` | Yes | Hash of the commit to cherry-pick |
+| `parentIndex` | `number` | Yes | For merge commits, specifies which parent to use (0 for non-merge commits) |
+
+### Implementation
+
+- **Regular commit:** `git cherry-pick <commitHash>`
+- **Merge commit:** `git cherry-pick <commitHash> -m <parentIndex>`
+
+### Response
+
+Returns a status indicating success (`null`) or an error message if the operation failed.
+
+<Info>
+The `parentIndex` parameter is only used for merge commits. For regular commits, set it to `0`. For merge commits, use `1` or `2` to specify which parent's changes to apply.
+</Info>
+
+---
+
+## Revert Commit
+
+Create a new commit that undoes the changes from a specific commit.
+
+**Command:** `revertCommit`
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `repo` | `string` | Yes | Path to the Git repository |
+| `commitHash` | `string` | Yes | Hash of the commit to revert |
+| `parentIndex` | `number` | Yes | For merge commits, specifies which parent to use (0 for non-merge commits) |
+
+### Implementation
+
+- **Regular commit:** `git revert --no-edit <commitHash>`
+- **Merge commit:** `git revert --no-edit <commitHash> -m <parentIndex>`
+
+### Response
+
+Returns a status indicating success (`null`) or an error message if the operation failed.
+
+<Note>
+Revert creates a new commit that undoes the changes, preserving history. This is safer than reset for commits that have been shared with others.
+</Note>
+
+---
+
+## Reset to Commit
+
+Reset the current branch to a specific commit.
+
+**Command:** `resetToCommit`
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `repo` | `string` | Yes | Path to the Git repository |
+| `commitHash` | `string` | Yes | Hash of the commit to reset to |
+| `resetMode` | `"soft" \| "mixed" \| "hard"` | Yes | Reset mode determining how to handle changes |
+
+### Reset Modes
+
+- **`soft`**: Moves HEAD to the commit, keeps changes staged
+- **`mixed`**: Moves HEAD to the commit, unstages changes but keeps them in working directory
+- **`hard`**: Moves HEAD to the commit, discards all changes
+
+### Implementation
+
+Executes: `git reset --<resetMode> <commitHash>`
+
+### Response
+
+Returns a status indicating success (`null`) or an error message if the operation failed.
+
+<Warning>
+Using `--hard` mode will permanently discard all changes after the specified commit. This operation cannot be undone unless you have the commit hashes.
+</Warning>
+
+---
+
+## Merge Commit
+
+Merge a specific commit into the current branch.
+
+**Command:** `mergeCommit`
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `repo` | `string` | Yes | Path to the Git repository |
+| `commitHash` | `string` | Yes | Hash of the commit to merge |
+| `createNewCommit` | `boolean` | Yes | If `true`, always create a merge commit (uses `--no-ff`) |
+
+### Implementation
+
+- **Fast-forward merge:** `git merge <commitHash>`
+- **Force merge commit:** `git merge <commitHash> --no-ff`
+
+### Response
+
+Returns a status indicating success (`null`) or an error message if the operation failed.
+
+<Info>
+Setting `createNewCommit` to `true` prevents fast-forward merges and always creates a merge commit, making the merge explicit in the history.
+</Info>

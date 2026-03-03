@@ -1,0 +1,417 @@
+---
+title: Contributing
+description: Learn how to contribute to neo-git-graph development
+---
+
+Thank you for your interest in contributing to neo-git-graph! This guide will help you get started.
+
+## Ways to Contribute
+
+There are many ways to contribute to neo-git-graph:
+
+- **Report bugs** - Found an issue? Let us know!
+- **Suggest features** - Have an idea? We'd love to hear it
+- **Improve documentation** - Help others understand the extension
+- **Submit code** - Fix bugs or implement new features
+- **Review PRs** - Help review contributions from others
+
+## Getting Started
+
+<Steps>
+  <Step title="Fork the repository">
+    Fork the repository on GitHub:
+    
+    [github.com/asispts/neo-git-graph](https://github.com/asispts/neo-git-graph)
+    
+    Click the **Fork** button in the top-right corner.
+  </Step>
+  
+  <Step title="Clone your fork">
+    ```bash
+    git clone https://github.com/YOUR-USERNAME/neo-git-graph.git
+    cd neo-git-graph
+    ```
+  </Step>
+  
+  <Step title="Install dependencies">
+    Neo-git-graph uses pnpm for package management:
+    
+    ```bash
+    # Enable corepack (included with Node.js 16.10+)
+    corepack enable
+    
+    # Install dependencies
+    pnpm install
+    ```
+    
+    <Note>
+    The project requires Node.js 22 and uses pnpm 10.29.3 (configured via `packageManager` in package.json).
+    </Note>
+  </Step>
+  
+  <Step title="Open in VS Code">
+    ```bash
+    code .
+    ```
+    
+    The repository includes VS Code configuration for debugging the extension.
+  </Step>
+</Steps>
+
+## Development Workflow
+
+### Project Structure
+
+```
+neo-git-graph/
+├── src/              # Extension source code (TypeScript)
+│   ├── extension.ts  # Main extension entry point
+│   ├── dataSource.ts # Git command execution
+│   ├── repoManager.ts # Repository detection and management
+│   └── config.ts     # Configuration handling
+├── web/              # WebView UI code
+│   └── main.ts       # WebView entry point
+├── resources/        # Icons and assets
+├── out/              # Compiled output (generated)
+└── package.json      # Extension manifest
+```
+
+### Available Scripts
+
+<CodeGroup>
+```bash Type Check
+pnpm run typecheck
+```
+
+```bash Compile
+pnpm run compile
+```
+
+```bash Format Check
+pnpm run format
+```
+
+```bash Format Fix
+pnpm run format:fix
+```
+
+```bash Lint
+pnpm run lint
+```
+
+```bash Lint Fix
+pnpm run lint:fix
+```
+
+```bash Package
+pnpm run package
+```
+</CodeGroup>
+
+### Running the Extension
+
+<Steps>
+  <Step title="Compile the code">
+    ```bash
+    pnpm run compile
+    ```
+    
+    This compiles both the extension code (`src/`) and webview code (`web/`).
+  </Step>
+  
+  <Step title="Start debugging">
+    Press `F5` or go to **Run and Debug** → **Run Extension**
+    
+    This opens a new VS Code window with the extension loaded.
+  </Step>
+  
+  <Step title="Test your changes">
+    In the Extension Development Host window:
+    
+    1. Open a Git repository
+    2. Run **Neo Git Graph: View Git Graph (git log)**
+    3. Verify your changes work as expected
+  </Step>
+  
+  <Step title="Make changes">
+    Edit code in the main VS Code window. The extension will automatically recompile.
+    
+    Click the **Reload** button in the debug toolbar to reload the extension with your changes.
+  </Step>
+</Steps>
+
+## Code Quality Standards
+
+Neo-git-graph maintains high code quality through automated checks:
+
+### Linting
+
+The project uses **oxlint** for fast, accurate linting:
+
+```bash
+# Check for issues
+pnpm run lint
+
+# Auto-fix issues
+pnpm run lint:fix
+```
+
+### Formatting
+
+The project uses **oxfmt** for consistent code formatting:
+
+```bash
+# Check formatting
+pnpm run format
+
+# Fix formatting
+pnpm run format:fix
+```
+
+### Type Checking
+
+All code must pass TypeScript type checking:
+
+```bash
+pnpm run typecheck
+```
+
+This checks both `src/` and `web/` directories.
+
+<Tip>
+Run all checks before committing:
+```bash
+pnpm run typecheck && pnpm run lint && pnpm run format
+```
+</Tip>
+
+## Continuous Integration
+
+All pull requests must pass CI checks:
+
+- **Type checking** - Ensures no TypeScript errors
+- **Linting** - Enforces code quality rules
+- **Formatting** - Verifies consistent code style
+
+CI runs on:
+- Every push to `main`
+- Every pull request to `main`
+- Node.js 22
+
+See `.github/workflows/ci.yaml` for the full CI configuration.
+
+## Making Changes
+
+### Creating a Branch
+
+```bash
+git checkout -b feature/your-feature-name
+```
+
+Use descriptive branch names:
+- `feature/add-commit-search` - New features
+- `fix/avatar-cache-bug` - Bug fixes
+- `docs/update-readme` - Documentation changes
+- `refactor/cleanup-datasource` - Code refactoring
+
+### Writing Code
+
+<Accordion title="Extension Code (src/)">
+  The `src/` directory contains the extension's backend code:
+  
+  - **extension.ts** - Extension activation and commands
+  - **dataSource.ts** - Git command execution (git log, git branch, etc.)
+  - **repoManager.ts** - Repository detection and workspace management
+  - **gitGraphView.ts** - WebView management
+  - **config.ts** - Reading VS Code settings
+  
+  Key patterns:
+  - Use `getConfig()` to read settings
+  - Execute Git commands via `DataSource` class
+  - Return promises for async operations
+  - Handle errors gracefully
+</Accordion>
+
+<Accordion title="WebView Code (web/)">
+  The `web/` directory contains the UI code that runs in the webview:
+  
+  - Renders the commit graph visualization
+  - Handles user interactions (clicks, scrolling)
+  - Communicates with extension via message passing
+  
+  This code runs in a sandboxed webview context, not the main VS Code process.
+</Accordion>
+
+<Accordion title="Configuration (package.json)">
+  The `package.json` defines:
+  
+  - Extension metadata (name, version, description)
+  - Commands contributed by the extension
+  - Configuration settings (all prefixed with `neo-git-graph.`)
+  - Activation events
+  
+  When adding new settings, update both:
+  - `contributes.configuration.properties` in package.json
+  - `config.ts` getter method
+</Accordion>
+
+### Commit Guidelines
+
+Write clear, descriptive commit messages:
+
+```bash
+# Good
+git commit -m "fix: resolve avatar cache invalidation bug"
+git commit -m "feat: add commit search functionality"
+git commit -m "docs: update devcontainer setup guide"
+
+# Less clear
+git commit -m "fix bug"
+git commit -m "update code"
+```
+
+Use conventional commit prefixes:
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `docs:` - Documentation changes
+- `refactor:` - Code refactoring
+- `test:` - Test changes
+- `chore:` - Build/tooling changes
+
+## Submitting a Pull Request
+
+<Steps>
+  <Step title="Push your changes">
+    ```bash
+    git push origin feature/your-feature-name
+    ```
+  </Step>
+  
+  <Step title="Create a pull request">
+    Go to your fork on GitHub and click **New Pull Request**.
+    
+    Select:
+    - **Base repository**: `asispts/neo-git-graph`
+    - **Base branch**: `main`
+    - **Head repository**: `YOUR-USERNAME/neo-git-graph`
+    - **Compare branch**: `feature/your-feature-name`
+  </Step>
+  
+  <Step title="Write a clear description">
+    Describe:
+    - What the PR does
+    - Why the change is needed
+    - How to test it
+    - Any breaking changes
+    
+    Example:
+    ```markdown
+    ## What
+    Adds a search box to filter commits by message or author.
+    
+    ## Why
+    Users with large repositories need to quickly find specific commits.
+    
+    ## How to Test
+    1. Open Git Graph on a repository
+    2. Type in the new search box
+    3. Verify commits are filtered in real-time
+    
+    ## Breaking Changes
+    None
+    ```
+  </Step>
+  
+  <Step title="Wait for CI checks">
+    GitHub Actions will automatically run:
+    - Type checking
+    - Linting
+    - Formatting
+    
+    All checks must pass before the PR can be merged.
+  </Step>
+  
+  <Step title="Address feedback">
+    Maintainers may request changes. Make updates and push to the same branch:
+    
+    ```bash
+    # Make changes
+    git add .
+    git commit -m "address review feedback"
+    git push origin feature/your-feature-name
+    ```
+    
+    The PR will automatically update.
+  </Step>
+</Steps>
+
+## Reporting Issues
+
+Found a bug? [Create an issue](https://github.com/asispts/neo-git-graph/issues/new).
+
+Include:
+- **Clear title** - "Graph doesn't refresh after commit" (not "broken")
+- **Steps to reproduce** - Exact steps to trigger the issue
+- **Expected behavior** - What should happen
+- **Actual behavior** - What actually happens
+- **Environment** - VS Code version, OS, neo-git-graph version
+- **Screenshots** - If applicable
+
+<Accordion title="Example Issue Report">
+  **Title**: Graph doesn't update after committing through terminal
+  
+  **Description**:
+  
+  When I make a commit using `git commit` in the integrated terminal, the Git Graph view doesn't automatically refresh to show the new commit.
+  
+  **Steps to reproduce**:
+  1. Open Git Graph on a repository
+  2. Make changes to a file
+  3. In terminal, run `git add .` and `git commit -m "test"`
+  4. Check Git Graph - commit doesn't appear
+  
+  **Expected**: Graph should auto-refresh and show the new commit
+  
+  **Actual**: Graph still shows old state. Manual refresh button works.
+  
+  **Environment**:
+  - VS Code: 1.98.0
+  - neo-git-graph: 0.1.1
+  - OS: macOS 14.2
+  
+  **Notes**: Commits made through VS Code's Source Control view DO trigger auto-refresh.
+</Accordion>
+
+## Feature Requests
+
+Have an idea? [Open a feature request](https://github.com/asispts/neo-git-graph/issues/new).
+
+Describe:
+- **Use case** - What problem does this solve?
+- **Proposed solution** - How should it work?
+- **Alternatives** - Any other approaches considered?
+- **Examples** - How do other tools handle this?
+
+## License
+
+By contributing to neo-git-graph, you agree that your contributions will be licensed under the **MIT License**.
+
+This is important! The entire project is MIT licensed to preserve the open-source nature of the original Git Graph (before its license change in May 2019).
+
+<Note>
+All contributions must be your original work or properly attributed. Don't submit code copied from the non-MIT versions of Git Graph or other incompatibly-licensed sources.
+</Note>
+
+## Questions?
+
+Not sure about something? Feel free to:
+
+- Open a discussion on GitHub
+- Comment on an existing issue
+- Ask in your pull request
+
+We're here to help!
+
+## Thank You
+
+Every contribution, no matter how small, helps make neo-git-graph better for everyone. We appreciate your time and effort!

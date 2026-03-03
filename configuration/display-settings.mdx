@@ -1,0 +1,176 @@
+---
+title: Display Settings
+description: Customize the visual appearance of your Git Graph
+---
+
+Display settings control how the Git Graph visualizes your repository history, including date formats, colors, graph styles, and UI elements.
+
+## Date and Time Display
+
+### dateFormat
+
+<ParamField path="neo-git-graph.dateFormat" type="string" default="Date & Time">
+  Specifies the date format to be used in the date column of Git Graph.
+  
+  **Available options:**
+  - `"Date & Time"` - Show the date and time, for example "19 Mar 2019 21:34"
+  - `"Date Only"` - Show the date only, for example "19 Mar 2019"
+  - `"Relative"` - Show relative times, for example "5 minutes ago"
+</ParamField>
+
+**Example:**
+```json
+{
+  "neo-git-graph.dateFormat": "Relative"
+}
+```
+
+### dateType
+
+<ParamField path="neo-git-graph.dateType" type="string" default="Author Date">
+  Specifies the date type to be displayed throughout Git Graph.
+  
+  **Available options:**
+  - `"Author Date"` - Use the author date of a commit (when the changes were originally made)
+  - `"Commit Date"` - Use the committer date of a commit (when the commit was applied to the branch)
+</ParamField>
+
+**Example:**
+```json
+{
+  "neo-git-graph.dateType": "Commit Date"
+}
+```
+
+<Note>
+  The difference between author and commit dates is important when commits are rebased or cherry-picked. The author date preserves the original creation time, while the commit date reflects when the commit was applied.
+</Note>
+
+## Graph Appearance
+
+### graphColours
+
+<ParamField path="neo-git-graph.graphColours" type="array" default="[12 predefined colors]">
+  Specifies the colours used on the graph for different branches. Colors must be specified in HEX or RGB format.
+  
+  **Default colors:**
+  ```json
+  [
+    "#0085d9",
+    "#d9008f",
+    "#00d90a",
+    "#d98500",
+    "#a300d9",
+    "#ff0000",
+    "#00d9cc",
+    "#e138e8",
+    "#85d900",
+    "#dc5b23",
+    "#6f24d6",
+    "#ffcc00"
+  ]
+  ```
+</ParamField>
+
+**Example with custom colors:**
+```json
+{
+  "neo-git-graph.graphColours": [
+    "#FF6B6B",
+    "#4ECDC4",
+    "#45B7D1",
+    "#FFA07A",
+    "#98D8C8"
+  ]
+}
+```
+
+<Tip>
+  You can use any valid CSS color format including HEX (`#RRGGBB`), HEX with alpha (`#RRGGBBAA`), or RGB (`rgb(r, g, b)`).
+</Tip>
+
+### graphStyle
+
+<ParamField path="neo-git-graph.graphStyle" type="string" default="rounded">
+  Specifies the style of the graph when transitioning between branches.
+  
+  **Available options:**
+  - `"rounded"` - Use smooth curves when transitioning between branches
+  - `"angular"` - Use angular lines when transitioning between branches
+</ParamField>
+
+**Example:**
+```json
+{
+  "neo-git-graph.graphStyle": "angular"
+}
+```
+
+## UI Elements
+
+### tabIconColourTheme
+
+<ParamField path="neo-git-graph.tabIconColourTheme" type="string" default="colour">
+  Specifies the colour theme of the icon displayed on the Git Graph tab.
+  
+  **Available options:**
+  - `"colour"` - Show a colour icon which suits most Visual Studio Code colour themes
+  - `"grey"` - Show a grey icon which suits Visual Studio Code colour themes that are predominantly grayscale
+</ParamField>
+
+**Example:**
+```json
+{
+  "neo-git-graph.tabIconColourTheme": "grey"
+}
+```
+
+### autoCenterCommitDetailsView
+
+<ParamField path="neo-git-graph.autoCenterCommitDetailsView" type="boolean" default="true">
+  Automatically center the commit details view when it is opened.
+  
+  When enabled, the graph will automatically scroll to center the selected commit when you click on it to view its details.
+</ParamField>
+
+**Example:**
+```json
+{
+  "neo-git-graph.autoCenterCommitDetailsView": false
+}
+```
+
+### showStatusBarItem
+
+<ParamField path="neo-git-graph.showStatusBarItem" type="boolean" default="true">
+  Show a Status Bar item which opens Git Graph when clicked.
+  
+  When enabled, a clickable item appears in the VS Code status bar (bottom of the window) that provides quick access to open the Git Graph view.
+</ParamField>
+
+**Example:**
+```json
+{
+  "neo-git-graph.showStatusBarItem": false
+}
+```
+
+## Example Configuration
+
+Here's a complete example combining multiple display settings:
+
+```json
+{
+  "neo-git-graph.dateFormat": "Relative",
+  "neo-git-graph.dateType": "Author Date",
+  "neo-git-graph.graphStyle": "angular",
+  "neo-git-graph.graphColours": [
+    "#FF6B6B",
+    "#4ECDC4",
+    "#45B7D1"
+  ],
+  "neo-git-graph.tabIconColourTheme": "grey",
+  "neo-git-graph.autoCenterCommitDetailsView": true,
+  "neo-git-graph.showStatusBarItem": true
+}
+```

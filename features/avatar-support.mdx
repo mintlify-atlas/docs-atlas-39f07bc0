@@ -1,0 +1,393 @@
+---
+title: Avatar Support
+description: Automatically fetch and display user avatars from GitHub, GitLab, and Gravatar
+---
+
+## Overview
+
+Neo Git Graph can display avatars for commit authors and committers by fetching images from GitHub, GitLab, or Gravatar based on the repository's remote origin and user email addresses.
+
+<Warning>
+By enabling avatar fetching, you consent to commit author and committer email addresses being sent to GitHub, GitLab, or Gravatar depending on the repository's remote origin.
+</Warning>
+
+## Enabling Avatar Fetching
+
+### Configuration
+
+Enable avatar support in VS Code settings:
+
+```json
+{
+  "neo-git-graph.fetchAvatars": false  // Set to true to enable
+}
+```
+
+<Tabs>
+  <Tab title="Settings UI">
+    1. Open Settings (Cmd/Ctrl + ,)
+    2. Search for "neo-git-graph.fetchAvatars"
+    3. Check the box to enable
+  </Tab>
+  <Tab title="settings.json">
+    ```json
+    {
+      "neo-git-graph.fetchAvatars": true
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Clearing Avatar Cache
+
+To clear cached avatars:
+
+1. Open Command Palette (Cmd/Ctrl + Shift + P)
+2. Run: `(neo) Git Graph: Clear Avatar Cache`
+3. All cached avatars are deleted
+4. Avatars will be re-fetched on next view
+
+```typescript
+// From avatarManager.ts:78-81
+public clearCache() {
+  this.avatars = {};
+  this.extensionState.clearAvatarCache();
+}
+```
+
+## Avatar Sources
+
+The extension automatically determines the avatar source based on your repository's remote URL:
+
+### GitHub
+
+<Card title="GitHub" icon="github">
+  **Detection**: Remote URL starts with `https://github.com/`
+  
+  **Method**: Fetches avatars via GitHub API using commit data
+  
+  **Rate Limit**: 60 requests/hour (unauthenticated)
+</Card>
+
+```typescript
+// From avatarManager.ts:116-122
+if (remoteUrl.startsWith("https://github.com/")) {
+  let remoteUrlComps = remoteUrl.split("/");
+  remoteSource = {
+    type: "github",
+    owner: remoteUrlComps[3],
+    repo: remoteUrlComps[4].replace(/\.git$/, "")
+  };
+}
+```
+
+**API Endpoint**:
+```
+https://api.github.com/repos/{owner}/{repo}/commits/{hash}
+```
+
+### GitLab
+
+<Card title="GitLab" icon="gitlab">
+  **Detection**: Remote URL starts with `https://gitlab.com/`
+  
+  **Method**: Searches users by email via GitLab API
+  
+  **Rate Limit**: Respects GitLab rate limiting headers
+</Card>
+
+```typescript
+// From avatarManager.ts:123-124
+else if (remoteUrl.startsWith("https://gitlab.com/")) {
+  remoteSource = { type: "gitlab" };
+}
+```
+
+**API Endpoint**:
+```
+https://gitlab.com/api/v4/users?search={email}
+```
+
+### Gravatar
+
+<Card title="Gravatar" icon="user-circle">
+  **Detection**: Fallback for all other remotes or when GitHub/GitLab fail
+  
+  **Method**: MD5 hash of email address
+  
+  **Fallback**: Identicon generation if no avatar found
+</Card>
+
+```typescript
+// From avatarManager.ts:267-282
+private async fetchFromGravatar(avatarRequest: AvatarRequestItem) {
+  let hash = crypto.createHash("md5").update(avatarRequest.email).digest("hex");
+  let img = await this.downloadAvatarImage(
+      avatarRequest.email,
+      "https://secure.gravatar.com/avatar/" + hash + "?s=54&d=404"
+    ),
+    identicon = false;
+  if (img === null) {
+    img = await this.downloadAvatarImage(
+      avatarRequest.email,
+      "https://secure.gravatar.com/avatar/" + hash + "?s=54&d=identicon"
+    );
+    identicon = true;
+  }
+  if (img !== null) this.saveAvatar(avatarRequest.email, img, identicon);
+}
+```
+
+## Avatar Fetching Process
+
+### Request Queue
+
+Avatars are fetched asynchronously using a priority queue:
+
+```typescript
+// From avatarManager.ts:30-38
+this.queue = new AvatarRequestQueue(() => {
+  if (this.interval !== null) return;
+  this.interval = setInterval(() => {
+    // Fetch avatars every 10 seconds
+    this.fetchAvatarsInterval();
+  }, 10000);
+  this.fetchAvatarsInterval();
+});
+```
+
+<Steps>
+  <Step title="User Requests Avatar">
+    When an email address appears in the graph, a fetch request is queued
+  </Step>
+  <Step title="Queue Processing">
+    Requests are processed every 10 seconds to respect rate limits
+  </Step>
+  <Step title="Source Detection">
+    Remote URL determines GitHub, GitLab, or Gravatar
+  </Step>
+  <Step title="Image Download">
+    Avatar image is downloaded (54x54 pixels)
+  </Step>
+  <Step title="Cache Storage">
+    Image is saved to disk and cached in memory
+  </Step>
+  <Step title="Display Update">
+    Webview receives base64-encoded image for display
+  </Step>
+</Steps>
+
+### Retry Logic
+
+The extension implements smart retry logic:
+
+<AccordionGroup>
+  <Accordion title="GitHub Rate Limit">
+    ```typescript
+    if (res.headers["x-ratelimit-remaining"] === "0") {
+      this.githubTimeout = parseInt(res.headers["x-ratelimit-reset"]) * 1000;
+    }
+    ```
+    
+    Requests are paused until rate limit resets
+  </Accordion>
+  <Accordion title="Commit Not Found (422)">
+    ```typescript
+    if (res.statusCode === 422 && 
+        avatarRequest.commits.length > avatarRequest.attempts + 1 && 
+        avatarRequest.attempts < 4) {
+      this.queue.addItem(avatarRequest, 0, true);
+      return;
+    }
+    ```
+    
+    Tries up to 5 different commits from the user's history
+  </Accordion>
+  <Accordion title="Server Error (5xx)">
+    ```typescript
+    if (res.statusCode! >= 500) {
+      this.githubTimeout = t + 600000;  // Retry after 10 minutes
+      this.queue.addItem(avatarRequest, this.githubTimeout, false);
+    }
+    ```
+  </Accordion>
+  <Accordion title="Network Error">
+    ```typescript
+    .on("error", () => {
+      this.githubTimeout = t + 300000;  // Retry after 5 minutes
+      this.queue.addItem(avatarRequest, this.githubTimeout, false);
+    });
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Avatar Caching
+
+### Cache Duration
+
+Avatars are cached with different expiration times:
+
+```typescript
+// From avatarManager.ts:42-50
+if (this.avatars[email].timestamp < t - 1209600000 ||  // 14 days
+    (this.avatars[email].identicon && 
+     this.avatars[email].timestamp < t - 345600000)) {  // 4 days for identicons
+  this.queue.add(email, repo, commits, false);
+}
+```
+
+<CardGroup cols={2}>
+  <Card title="Standard Avatars" icon="clock">
+    Cached for **14 days** before refresh
+  </Card>
+  <Card title="Identicons (Fallback)" icon="clock">
+    Cached for **4 days** - shorter to retry finding real avatars
+  </Card>
+</CardGroup>
+
+### Storage Location
+
+Avatars are stored in VS Code's extension storage:
+
+```typescript
+// From avatarManager.ts:305-312
+fs.writeFile(
+  this.avatarStorageFolder + "/" + hash + "." + format,
+  Buffer.concat(imageBufferArray),
+  (err) => {
+    resolve(err ? null : hash + "." + format);
+  }
+);
+```
+
+**File naming**: `{MD5_hash_of_email}.{format}` (e.g., `abc123def456.png`)
+
+### Cache Management
+
+<Tabs>
+  <Tab title="In-Memory Cache">
+    ```typescript
+    interface Avatar {
+      image: string;      // Filename
+      timestamp: number;  // Last fetch time
+      identicon: boolean; // Is fallback icon?
+    }
+    
+    private avatars: { [email: string]: Avatar };
+    ```
+  </Tab>
+  <Tab title="Persistent Storage">
+    Cache is saved to `ExtensionState` and persists across VS Code sessions
+    
+    ```typescript
+    this.extensionState.saveAvatar(email, this.avatars[email]);
+    ```
+  </Tab>
+</Tabs>
+
+## Display Format
+
+Avatars are sent to the webview as base64-encoded data URIs:
+
+```typescript
+// From avatarManager.ts:345-354
+this.view.sendMessage({
+  command: "fetchAvatar",
+  email: email,
+  image:
+    "data:image/" +
+    this.avatars[email].image!.split(".")[1] +
+    ";base64," +
+    data.toString("base64")
+});
+```
+
+**Format**: `data:image/{png|jpeg|gif};base64,{base64_data}`
+
+## Privacy Considerations
+
+<Warning>
+**Email Transmission**: When avatar fetching is enabled, email addresses from commits are sent to:
+- GitHub API (for github.com repositories)
+- GitLab API (for gitlab.com repositories)  
+- Gravatar service (for all other repositories or as fallback)
+
+This is required to fetch avatars but transmits potentially private data.
+</Warning>
+
+### Best Practices
+
+<AccordionGroup>
+  <Accordion title="Private Repositories">
+    Consider disabling avatar fetching for repositories with sensitive commit information
+  </Accordion>
+  <Accordion title="Corporate Networks">
+    Avatar fetching requires internet access and may be blocked by firewalls
+  </Accordion>
+  <Accordion title="Rate Limits">
+    GitHub API has strict rate limits for unauthenticated requests. Heavy use may cause delays.
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+### Avatars Not Appearing
+
+<Steps>
+  <Step title="Check Setting">
+    Verify `neo-git-graph.fetchAvatars` is set to `true`
+  </Step>
+  <Step title="Check Network">
+    Ensure internet connectivity and firewall allows GitHub/GitLab/Gravatar
+  </Step>
+  <Step title="Check Rate Limits">
+    GitHub: 60 requests/hour may be exhausted - wait for reset
+  </Step>
+  <Step title="Clear Cache">
+    Run "Clear Avatar Cache" command and refresh graph
+  </Step>
+  <Step title="Check Console">
+    Open Developer Tools (Help > Toggle Developer Tools) for errors
+  </Step>
+</Steps>
+
+### Identicons Only
+
+If you only see identicons (geometric patterns):
+
+- Email address may not be registered with Gravatar
+- GitHub/GitLab API couldn't find the user
+- Commit may not exist on remote (for GitHub)
+
+<Tip>
+To get real avatars, ensure:
+- Email in commits matches GitHub/GitLab account email
+- Commits are pushed to remote
+- For Gravatar: Register email at [gravatar.com](https://gravatar.com)
+</Tip>
+
+## Performance Impact
+
+<Info>
+Avatar fetching is highly optimized:
+- Asynchronous background processing
+- Queue-based rate limiting
+- Persistent caching reduces network requests
+- No impact on graph rendering speed
+</Info>
+
+### Network Usage
+
+- **Initial fetch**: ~10-50 KB per avatar
+- **Refresh**: Only after cache expiration (4-14 days)
+- **Queue interval**: 10 seconds between requests
+
+## Related Commands
+
+<CardGroup cols={1}>
+  <Card title="Clear Avatar Cache" icon="trash">
+    **Command**: `neo-git-graph.clearAvatarCache`
+    
+    Removes all cached avatar images and metadata, forcing fresh downloads on next view
+  </Card>
+</CardGroup>

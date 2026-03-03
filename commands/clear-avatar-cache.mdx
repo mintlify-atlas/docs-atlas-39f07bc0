@@ -1,0 +1,53 @@
+---
+title: "Clear Avatar Cache"
+description: "Clear the cached avatar images for commit authors and committers"
+---
+
+The `Clear Avatar Cache` command removes all cached avatar images that were fetched for commit authors and committers.
+
+## Usage
+
+### Command Palette
+
+1. Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on macOS) to open the Command Palette
+2. Type "Git Graph: Clear Avatar Cache"
+3. Press Enter
+
+## Command Details
+
+<ResponseField name="Command ID" type="string">
+  `neo-git-graph.clearAvatarCache`
+</ResponseField>
+
+<ResponseField name="Category" type="string">
+  (neo) Git Graph
+</ResponseField>
+
+<ResponseField name="Title" type="string">
+  Clear Avatar Cache
+</ResponseField>
+
+## What It Does
+
+This command clears the internal avatar cache managed by the extension. Avatar images are fetched from services like GitHub, GitLab, or Gravatar based on commit author and committer email addresses.
+
+## When to Use
+
+You might want to clear the avatar cache when:
+
+- Avatar images are not displaying correctly
+- You've updated your profile picture on GitHub/GitLab/Gravatar
+- You want to free up storage space
+- You're troubleshooting avatar-related issues
+
+<Warning>
+This command only clears cached avatars. New avatars will be fetched again when you open Git Graph, provided that the `neo-git-graph.fetchAvatars` setting is enabled.
+</Warning>
+
+## Related Settings
+
+- `neo-git-graph.fetchAvatars` - Enable/disable fetching avatars (default: false)
+
+<Note>
+By enabling avatar fetching, you consent to commit author and committer email addresses being sent to GitHub, GitLab, or Gravatar, depending on your repository's remote origin.
+</Note>

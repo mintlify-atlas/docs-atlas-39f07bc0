@@ -1,0 +1,355 @@
+---
+title: Troubleshooting
+description: Solutions to common issues with neo-git-graph
+---
+
+This guide helps you resolve common issues when using neo-git-graph.
+
+## Repository Not Detected
+
+<Accordion title="Git Graph doesn't show my repository">
+  **Symptoms:**
+  - No repositories appear in the dropdown
+  - "No Git repository was found" message
+  - Git Graph status bar item is missing
+
+  **Solutions:**
+
+  <Steps>
+    <Step title="Verify Git repository">
+      Ensure you've opened a folder that contains a `.git` directory:
+      
+      ```bash
+      ls -la .git
+      ```
+      
+      If `.git` doesn't exist, initialize a repository:
+      ```bash
+      git init
+      ```
+    </Step>
+    
+    <Step title="Check workspace folders">
+      Open the Command Palette and run **Workspaces: Add Folder to Workspace** if your repository is in a subfolder.
+      
+      Neo-git-graph only searches workspace root folders by default.
+    </Step>
+    
+    <Step title="Increase search depth">
+      For nested repositories, increase the search depth in settings:
+      
+      ```json
+      {
+        "neo-git-graph.maxDepthOfRepoSearch": 2
+      }
+      ```
+      
+      - `0` (default): Only searches workspace root folders
+      - `1`: Searches one level deep
+      - `2+`: Searches deeper levels
+      
+      <Warning>
+      Higher values may slow down repository detection in large workspaces.
+      </Warning>
+    </Step>
+    
+    <Step title="Reload VS Code window">
+      Sometimes VS Code needs a refresh:
+      
+      - Command Palette → **Developer: Reload Window**
+      - Or close and reopen VS Code
+    </Step>
+  </Steps>
+</Accordion>
+
+## Git Path Issues
+
+<Accordion title="Git command not found">
+  **Symptoms:**
+  - Error: "Git could not be found"
+  - Commands fail silently
+  - Empty graph view
+
+  **Solutions:**
+
+  <Steps>
+    <Step title="Verify Git installation">
+      Check if Git is installed:
+      
+      ```bash
+      git --version
+      ```
+      
+      If not installed:
+      - **macOS**: `brew install git` or download from [git-scm.com](https://git-scm.com)
+      - **Linux**: `sudo apt install git` or `sudo yum install git`
+      - **Windows**: Download from [git-scm.com](https://git-scm.com)
+    </Step>
+    
+    <Step title="Configure git.path">
+      If Git is installed but not in PATH, specify the full path:
+      
+      **Settings (JSON)**:
+      ```json
+      {
+        "git.path": "/usr/local/bin/git"
+      }
+      ```
+      
+      **Common Git locations:**
+      - macOS: `/usr/local/bin/git` or `/opt/homebrew/bin/git`
+      - Linux: `/usr/bin/git`
+      - Windows: `C:\\Program Files\\Git\\cmd\\git.exe`
+      
+      <Note>
+      Neo-git-graph uses VS Code's `git.path` setting. If the built-in Source Control works, neo-git-graph should work too.
+      </Note>
+    </Step>
+    
+    <Step title="Restart VS Code">
+      After changing `git.path`, restart VS Code completely (not just reload window).
+    </Step>
+  </Steps>
+</Accordion>
+
+<Accordion title="Git path with spaces">
+  **Symptom:** Git installed in a path with spaces (e.g., `C:\Program Files\Git`) doesn't work
+
+  **Solution:**
+  
+  Ensure the path is properly quoted in settings:
+  
+  ```json
+  {
+    "git.path": "C:\\Program Files\\Git\\cmd\\git.exe"
+  }
+  ```
+  
+  Neo-git-graph automatically wraps paths with spaces in quotes when executing commands.
+</Accordion>
+
+## Performance Issues
+
+<Accordion title="Git Graph is slow or freezes">
+  **Symptoms:**
+  - Graph takes a long time to load
+  - VS Code becomes unresponsive
+  - High CPU usage
+
+  **Solutions:**
+
+  **Reduce initial commit load:**
+  ```json
+  {
+    "neo-git-graph.initialLoadCommits": 200,
+    "neo-git-graph.loadMoreCommits": 100
+  }
+  ```
+  
+  **Disable uncommitted changes:**
+  For large repositories, checking uncommitted changes can be slow:
+  ```json
+  {
+    "neo-git-graph.showUncommittedChanges": false
+  }
+  ```
+  
+  **Disable avatars:**
+  Fetching avatars requires network requests:
+  ```json
+  {
+    "neo-git-graph.fetchAvatars": false
+  }
+  ```
+  
+  **Filter to current branch:**
+  Show only the current branch by default:
+  ```json
+  {
+    "neo-git-graph.showCurrentBranchByDefault": true
+  }
+  ```
+</Accordion>
+
+<Accordion title="Graph doesn't update after commits">
+  **Symptom:** New commits don't appear in the graph
+
+  **Solutions:**
+  - Click the **Refresh** button in the Git Graph view
+  - The graph auto-refreshes when you commit through VS Code's Source Control
+  - Manual Git commands (terminal) may require manual refresh
+</Accordion>
+
+## Display Issues
+
+<Accordion title="Graph looks broken or misaligned">
+  **Solutions:**
+  
+  **Try different graph styles:**
+  ```json
+  {
+    "neo-git-graph.graphStyle": "angular"
+  }
+  ```
+  Options: `"rounded"` (default) or `"angular"`
+  
+  **Adjust graph colors:**
+  Some color themes may conflict with graph colors:
+  ```json
+  {
+    "neo-git-graph.graphColours": [
+      "#0085d9",
+      "#d9008f",
+      "#00d90a",
+      "#d98500"
+    ]
+  }
+  ```
+  
+  **Change tab icon:**
+  For grayscale themes:
+  ```json
+  {
+    "neo-git-graph.tabIconColourTheme": "grey"
+  }
+  ```
+</Accordion>
+
+<Accordion title="Dates are displayed incorrectly">
+  **Solution:**
+  
+  Change the date format:
+  ```json
+  {
+    "neo-git-graph.dateFormat": "Date & Time",
+    "neo-git-graph.dateType": "Author Date"
+  }
+  ```
+  
+  **Date format options:**
+  - `"Date & Time"` - "19 Mar 2019 21:34"
+  - `"Date Only"` - "19 Mar 2019"
+  - `"Relative"` - "5 minutes ago"
+  
+  **Date type options:**
+  - `"Author Date"` - When the commit was originally authored
+  - `"Commit Date"` - When the commit was applied (relevant for rebases/cherry-picks)
+</Accordion>
+
+## Devcontainer Issues
+
+<Accordion title="Git Graph doesn't work in devcontainer">
+  See the [Devcontainer Setup guide](/guides/devcontainer-setup) for detailed troubleshooting.
+  
+  **Quick checks:**
+  1. Git installed in container: `git --version`
+  2. Extension installed in container (not locally)
+  3. Repository accessible in container filesystem
+  4. Check `git.path` if Git is in non-standard location
+</Accordion>
+
+## Avatar Issues
+
+<Accordion title="Avatars not showing">
+  **Symptoms:**
+  - No profile pictures in the graph
+  - Generic icons instead of avatars
+
+  **Solutions:**
+
+  <Steps>
+    <Step title="Enable avatar fetching">
+      ```json
+      {
+        "neo-git-graph.fetchAvatars": true
+      }
+      ```
+      
+      <Warning>
+      Enabling avatars sends commit author/committer email addresses to external services (GitHub, GitLab, or Gravatar).
+      </Warning>
+    </Step>
+    
+    <Step title="Check network connectivity">
+      Avatars require internet access to fetch from:
+      - GitHub API
+      - GitLab API
+      - Gravatar
+      
+      If behind a proxy, configure VS Code's proxy settings.
+    </Step>
+    
+    <Step title="Clear avatar cache">
+      If avatars are stale or broken:
+      
+      Command Palette → **Neo Git Graph: Clear Avatar Cache**
+      
+      Then reload the Git Graph view.
+    </Step>
+  </Steps>
+</Accordion>
+
+## General Troubleshooting Steps
+
+If you're experiencing issues not covered above:
+
+<Steps>
+  <Step title="Check VS Code output">
+    Open the Output panel (`View` → `Output`) and select **Git** from the dropdown.
+    
+    Look for error messages related to Git commands.
+  </Step>
+  
+  <Step title="Test with built-in Git">
+    Verify VS Code's built-in Source Control works:
+    
+    - Open the Source Control view (`Ctrl+Shift+G`)
+    - Check if it detects your repository
+    - Try making a commit
+    
+    If Source Control doesn't work, fix that first - neo-git-graph uses the same Git configuration.
+  </Step>
+  
+  <Step title="Reset extension settings">
+    Reset neo-git-graph settings to defaults:
+    
+    1. Open Settings (`Ctrl+,`)
+    2. Search for `neo-git-graph`
+    3. Click the gear icon → **Reset Setting** on each setting
+    4. Reload VS Code window
+  </Step>
+  
+  <Step title="Check for extension conflicts">
+    Disable other Git extensions temporarily to rule out conflicts:
+    
+    - GitLens
+    - Git History
+    - Other Git visualization tools
+    
+    Restart VS Code and test neo-git-graph.
+  </Step>
+  
+  <Step title="Report the issue">
+    If the problem persists, report it on GitHub:
+    
+    [github.com/asispts/neo-git-graph/issues](https://github.com/asispts/neo-git-graph/issues)
+    
+    Include:
+    - VS Code version
+    - neo-git-graph version
+    - Operating system
+    - Error messages from Output panel
+    - Steps to reproduce
+  </Step>
+</Steps>
+
+## Getting Help
+
+<CardGroup cols={2}>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/asispts/neo-git-graph/issues">
+    Report bugs and request features
+  </Card>
+  <Card title="Contributing" icon="code" href="/guides/contributing">
+    Help improve neo-git-graph
+  </Card>
+</CardGroup>

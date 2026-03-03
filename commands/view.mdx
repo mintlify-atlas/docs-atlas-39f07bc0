@@ -1,0 +1,58 @@
+---
+title: "View Git Graph"
+description: "Open the Git Graph visualization to view your repository's commit history"
+---
+
+The `View Git Graph` command opens the main Git Graph visualization panel, allowing you to explore your repository's commit history as an interactive graph.
+
+## Opening Git Graph
+
+There are multiple ways to open Git Graph:
+
+### Command Palette
+
+1. Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on macOS) to open the Command Palette
+2. Type "Git Graph: View Git Graph (git log)"
+3. Press Enter
+
+### Status Bar
+
+If enabled in settings, click the Git Graph icon in the Status Bar at the bottom of VS Code.
+
+<Note>
+The Status Bar item can be toggled using the `neo-git-graph.showStatusBarItem` setting.
+</Note>
+
+## Command Details
+
+<ResponseField name="Command ID" type="string">
+  `neo-git-graph.view`
+</ResponseField>
+
+<ResponseField name="Category" type="string">
+  (neo) Git Graph
+</ResponseField>
+
+<ResponseField name="Title" type="string">
+  View Git Graph (git log)
+</ResponseField>
+
+## What It Does
+
+When executed, this command:
+
+1. Creates or shows the Git Graph view panel
+2. Loads the repository's commit history
+3. Displays commits as an interactive graph visualization
+4. Allows you to perform Git actions directly from the interface
+
+<Info>
+The number of commits initially loaded can be configured using the `neo-git-graph.initialLoadCommits` setting (default: 300).
+</Info>
+
+## Related Settings
+
+- `neo-git-graph.showStatusBarItem` - Show/hide the Status Bar item
+- `neo-git-graph.initialLoadCommits` - Number of commits to load initially
+- `neo-git-graph.showCurrentBranchByDefault` - Show only current branch or all branches
+- `neo-git-graph.showUncommittedChanges` - Display uncommitted changes in the graph

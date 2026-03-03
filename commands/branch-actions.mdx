@@ -1,0 +1,135 @@
+---
+title: Branch Actions
+description: Operations for creating, checking out, deleting, renaming, and merging branches in the Git Graph
+---
+
+Branch actions allow you to manage Git branches directly from the graph view. These operations modify the repository's branch structure and can switch your working directory to different branches.
+
+## Create Branch
+
+Create a new branch from a specific commit.
+
+**Command:** `createBranch`
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `repo` | `string` | Yes | Path to the Git repository |
+| `commitHash` | `string` | Yes | Hash of the commit where the branch will be created |
+| `branchName` | `string` | Yes | Name for the new branch |
+
+### Implementation
+
+Executes: `git branch <branchName> <commitHash>`
+
+### Response
+
+Returns a status indicating success (`null`) or an error message if the operation failed.
+
+---
+
+## Checkout Branch
+
+Switch to an existing branch or create and checkout a remote branch.
+
+**Command:** `checkoutBranch`
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `repo` | `string` | Yes | Path to the Git repository |
+| `branchName` | `string` | Yes | Name of the branch to check out |
+| `remoteBranch` | `string \| null` | Yes | If provided, creates a new local branch tracking this remote branch |
+
+### Implementation
+
+- **Local branch:** `git checkout <branchName>`
+- **Remote branch:** `git checkout -b <branchName> <remoteBranch>`
+
+### Response
+
+Returns a status indicating success (`null`) or an error message if the operation failed.
+
+---
+
+## Delete Branch
+
+Delete a branch from the repository.
+
+**Command:** `deleteBranch`
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `repo` | `string` | Yes | Path to the Git repository |
+| `branchName` | `string` | Yes | Name of the branch to delete |
+| `forceDelete` | `boolean` | Yes | If `true`, force deletion even if the branch has unmerged changes |
+
+### Implementation
+
+- **Normal delete:** `git branch --delete <branchName>`
+- **Force delete:** `git branch --delete --force <branchName>`
+
+### Response
+
+Returns a status indicating success (`null`) or an error message if the operation failed.
+
+<Warning>
+Force deleting a branch will permanently remove it even if it contains unmerged work.
+</Warning>
+
+---
+
+## Rename Branch
+
+Rename an existing branch.
+
+**Command:** `renameBranch`
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `repo` | `string` | Yes | Path to the Git repository |
+| `oldName` | `string` | Yes | Current name of the branch |
+| `newName` | `string` | Yes | New name for the branch |
+
+### Implementation
+
+Executes: `git branch -m <oldName> <newName>`
+
+### Response
+
+Returns a status indicating success (`null`) or an error message if the operation failed.
+
+---
+
+## Merge Branch
+
+Merge a branch into the current branch.
+
+**Command:** `mergeBranch`
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `repo` | `string` | Yes | Path to the Git repository |
+| `branchName` | `string` | Yes | Name of the branch to merge |
+| `createNewCommit` | `boolean` | Yes | If `true`, always create a merge commit (uses `--no-ff`) |
+
+### Implementation
+
+- **Fast-forward merge:** `git merge <branchName>`
+- **Force merge commit:** `git merge <branchName> --no-ff`
+
+### Response
+
+Returns a status indicating success (`null`) or an error message if the operation failed.
+
+<Info>
+Setting `createNewCommit` to `true` prevents fast-forward merges and always creates a merge commit, preserving the branch history.
+</Info>

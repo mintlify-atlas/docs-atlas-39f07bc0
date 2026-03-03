@@ -1,0 +1,186 @@
+---
+title: Performance Settings
+description: Optimize neo-git-graph for large repositories and workspaces
+---
+
+Performance settings help you optimize the Git Graph extension for large repositories by controlling how commits are loaded and how repositories are discovered in your workspace.
+
+## Commit Loading
+
+### initialLoadCommits
+
+<ParamField path="neo-git-graph.initialLoadCommits" type="number" default="300">
+  Specifies the number of commits to initially load when opening Git Graph.
+  
+  This setting controls how many commits are fetched and displayed when you first open the Git Graph view. For repositories with extensive history, you may want to adjust this value based on your needs:
+  - **Lower values** (e.g., 100-200): Faster initial load time, especially for large repositories
+  - **Higher values** (e.g., 500-1000): More commit history visible without additional loading
+</ParamField>
+
+**Example:**
+```json
+{
+  "neo-git-graph.initialLoadCommits": 500
+}
+```
+
+<Tip>
+  For very large repositories (10,000+ commits), consider reducing this value to improve initial load performance.
+</Tip>
+
+### loadMoreCommits
+
+<ParamField path="neo-git-graph.loadMoreCommits" type="number" default="100">
+  Specifies the number of commits to load when the "Load More Commits" button is pressed.
+  
+  This button only appears when more commits are available beyond those currently displayed. Adjusting this value affects:
+  - **Lower values** (e.g., 50): More frequent loading, but smaller chunks
+  - **Higher values** (e.g., 200-500): Fewer loads needed to view deep history
+</ParamField>
+
+**Example:**
+```json
+{
+  "neo-git-graph.loadMoreCommits": 200
+}
+```
+
+## Repository Features
+
+### showUncommittedChanges
+
+<ParamField path="neo-git-graph.showUncommittedChanges" type="boolean" default="true">
+  Show uncommitted changes in the Git Graph.
+  
+  When enabled, Git Graph displays your working directory changes and staged files as an uncommitted node in the graph. 
+  
+  **Performance impact:**
+  - For large repositories with many files, checking for uncommitted changes can add to the load time
+  - Set to `false` to decrease load time on large repositories
+  - You'll still have full access to committed history even when disabled
+</ParamField>
+
+**Example:**
+```json
+{
+  "neo-git-graph.showUncommittedChanges": false
+}
+```
+
+<Warning>
+  Disabling this setting means you won't see your current working directory changes in the graph. You'll need to use other Git tools to view uncommitted changes.
+</Warning>
+
+## Workspace Configuration
+
+### maxDepthOfRepoSearch
+
+<ParamField path="neo-git-graph.maxDepthOfRepoSearch" type="number" default="0">
+  Specifies the maximum depth of subfolders to search when discovering repositories in the workspace.
+  
+  This setting controls how deep into your workspace folder structure Git Graph will search for Git repositories:
+  - `0` - Only search the workspace root folders (no subfolders)
+  - `1` - Search workspace root and one level of subfolders
+  - `2` - Search workspace root and two levels of subfolders
+  - And so on...
+  
+  **Performance considerations:**
+  - Higher values allow discovering nested repositories but increase search time
+  - Lower values improve startup performance but may miss deeply nested repositories
+</ParamField>
+
+**Example:**
+```json
+{
+  "neo-git-graph.maxDepthOfRepoSearch": 2
+}
+```
+
+<Info>
+  If you have a monorepo or workspace with many nested Git repositories, you may need to increase this value. However, be aware that higher values will increase the time it takes to discover all repositories when VS Code starts.
+</Info>
+
+## Performance Optimization Examples
+
+### For Very Large Repositories
+
+If you're working with repositories that have tens of thousands of commits and many files:
+
+```json
+{
+  "neo-git-graph.initialLoadCommits": 200,
+  "neo-git-graph.loadMoreCommits": 100,
+  "neo-git-graph.showUncommittedChanges": false
+}
+```
+
+### For Fast Performance
+
+Minimal settings for the fastest possible performance:
+
+```json
+{
+  "neo-git-graph.initialLoadCommits": 100,
+  "neo-git-graph.loadMoreCommits": 50,
+  "neo-git-graph.showUncommittedChanges": false,
+  "neo-git-graph.maxDepthOfRepoSearch": 0
+}
+```
+
+### For Deep History Access
+
+If you frequently need to view extensive commit history:
+
+```json
+{
+  "neo-git-graph.initialLoadCommits": 1000,
+  "neo-git-graph.loadMoreCommits": 500,
+  "neo-git-graph.showUncommittedChanges": true
+}
+```
+
+### For Monorepo Workspaces
+
+If you have nested repositories in your workspace:
+
+```json
+{
+  "neo-git-graph.maxDepthOfRepoSearch": 3,
+  "neo-git-graph.initialLoadCommits": 300,
+  "neo-git-graph.showUncommittedChanges": true
+}
+```
+
+## Performance Tips
+
+<AccordionGroup>
+  <Accordion title="Why is Git Graph slow to load?">
+    Several factors can affect load time:
+    - Large number of commits being loaded initially
+    - Checking for uncommitted changes in repositories with many files
+    - Searching deeply nested folders for repositories
+    
+    Try reducing `initialLoadCommits` and setting `showUncommittedChanges` to `false`.
+  </Accordion>
+  
+  <Accordion title="How many commits should I load initially?">
+    It depends on your needs:
+    - **100-200 commits**: Good for quick access to recent history
+    - **300-500 commits**: Balanced approach (default is 300)
+    - **500-1000 commits**: For viewing extensive history without frequent reloading
+    
+    You can always load more commits on demand using the "Load More" button.
+  </Accordion>
+  
+  <Accordion title="Should I disable uncommitted changes?">
+    Disable `showUncommittedChanges` if:
+    - You have a very large repository with thousands of files
+    - Initial load time is too slow
+    - You primarily use Git Graph to view history, not current changes
+    
+    Keep it enabled if:
+    - You want to see your working directory state in the graph
+    - Load time is acceptable
+    - Your repository is small to medium sized
+  </Accordion>
+</AccordionGroup>

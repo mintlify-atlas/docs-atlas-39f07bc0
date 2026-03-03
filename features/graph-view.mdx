@@ -1,0 +1,263 @@
+---
+title: Graph View
+description: Visual representation of your Git history with customizable colors, styles, and uncommitted changes
+---
+
+## Overview
+
+The Git Graph view provides a powerful visual representation of your repository's commit history, branches, and relationships. The graph is rendered using SVG with smooth animations and supports both rounded and angular branch transitions.
+
+## Graph Visualization
+
+### Graph Styles
+
+The extension supports two graph rendering styles:
+
+<CodeGroup>
+
+```typescript Rounded (Default)
+// Uses smooth curves for branch transitions
+graphStyle: "rounded"
+// Bezier curves with 80% smoothing factor
+```
+
+```typescript Angular
+// Uses sharp angles for branch transitions  
+graphStyle: "angular"
+// Linear transitions with 38% offset
+```
+
+</CodeGroup>
+
+Configure the graph style in VS Code settings:
+
+```json
+{
+  "neo-git-graph.graphStyle": "rounded" // or "angular"
+}
+```
+
+### Branch Colors
+
+The graph uses a customizable color palette to distinguish branches. By default, 12 distinct colors are provided:
+
+<Note>
+Colors are specified in HEX or RGB format and cycle through the palette for repositories with many branches.
+</Note>
+
+**Default Color Palette:**
+
+```json
+{
+  "neo-git-graph.graphColours": [
+    "#0085d9",  // Blue
+    "#d9008f",  // Pink
+    "#00d90a",  // Green
+    "#d98500",  // Orange
+    "#a300d9",  // Purple
+    "#ff0000",  // Red
+    "#00d9cc",  // Cyan
+    "#e138e8",  // Magenta
+    "#85d900",  // Lime
+    "#dc5b23",  // Rust
+    "#6f24d6",  // Violet
+    "#ffcc00"   // Yellow
+  ]
+}
+```
+
+### Customizing Colors
+
+You can customize the color palette to match your preferences:
+
+<Tabs>
+  <Tab title="Settings UI">
+    1. Open VS Code Settings (Cmd/Ctrl + ,)
+    2. Search for "neo-git-graph.graphColours"
+    3. Click "Edit in settings.json"
+    4. Modify the color array
+  </Tab>
+  <Tab title="settings.json">
+    ```json
+    {
+      "neo-git-graph.graphColours": [
+        "#ff6b6b",
+        "#4ecdc4",
+        "#45b7d1",
+        "#96ceb4",
+        "#ffeaa7",
+        "#dfe6e9"
+      ]
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Uncommitted Changes
+
+### Visual Indicator
+
+Uncommitted changes appear as a special node at the top of the graph with:
+- Hash: `*`
+- Gray color: `#808080`
+- Message format: `"Uncommitted Changes (N)"` where N is the number of changed files
+- Parent: Current HEAD commit
+
+### Implementation Details
+
+The extension uses `git status -s --branch --untracked-files --porcelain` to detect:
+- Modified files
+- Untracked files
+- Staged changes
+
+```typescript
+// From dataSource.ts:403-416
+if (lines.length > 2) {
+  return { 
+    branch: lines[0].substring(3).split("...")[0], 
+    changes: lines.length - 2 
+  }
+}
+```
+
+<Warning>
+On large repositories, showing uncommitted changes may impact load time. You can disable this feature:
+
+```json
+{
+  "neo-git-graph.showUncommittedChanges": false
+}
+```
+</Warning>
+
+## Commit Loading
+
+### Initial Load
+
+Control how many commits are initially displayed:
+
+```json
+{
+  "neo-git-graph.initialLoadCommits": 300
+}
+```
+
+### Load More Commits
+
+When more commits are available, a "Load More Commits" button appears. Configure the increment:
+
+```json
+{
+  "neo-git-graph.loadMoreCommits": 100
+}
+```
+
+### Branch Filtering
+
+<Tabs>
+  <Tab title="All Branches">
+    Shows commits from all local branches and tags:
+    ```bash
+    git log --branches --tags
+    ```
+  </Tab>
+  <Tab title="With Remote Branches">
+    Enable the "Show Remote Branches" checkbox to include remote tracking branches:
+    ```bash
+    git log --branches --tags --remotes
+    ```
+  </Tab>
+  <Tab title="Current Branch Only">
+    Set default view to current branch:
+    ```json
+    {
+      "neo-git-graph.showCurrentBranchByDefault": true
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Graph Rendering
+
+### SVG Structure
+
+The graph is rendered as SVG paths with:
+- **Shadow layer**: Provides depth to branch lines
+- **Line layer**: Colored branch paths
+- **Circles**: Commit nodes (radius: 4px)
+- **Current commit**: Hollow circle with colored stroke
+
+### Grid System
+
+The graph uses a coordinate system defined in `web/graph.ts`:
+
+```typescript
+config.grid = {
+  x: 24,           // Horizontal spacing between branches
+  y: 32,           // Vertical spacing between commits  
+  offsetX: 16,     // Left margin
+  offsetY: 16,     // Top margin
+  expandY: height  // Expansion for commit details
+}
+```
+
+### Expanded Commit Details
+
+When a commit is selected, the graph automatically adjusts:
+1. Lines below the commit shift down by `expandY` pixels
+2. Lines crossing the expansion stretch vertically
+3. Branch transitions maintain visual continuity
+
+<Info>
+Enable auto-centering to automatically scroll to commit details:
+
+```json
+{
+  "neo-git-graph.autoCenterCommitDetailsView": true
+}
+```
+</Info>
+
+## Tab Icon
+
+Customize the Git Graph tab icon appearance:
+
+```json
+{
+  "neo-git-graph.tabIconColourTheme": "colour" // or "grey"
+}
+```
+
+- **colour**: Multi-color icon (default)
+- **grey**: Grayscale icon for monochrome themes
+
+## Performance Tips
+
+<AccordionGroup>
+  <Accordion title="Large Repositories">
+    - Reduce `initialLoadCommits` to 100-200
+    - Disable `showUncommittedChanges`
+    - Use branch filtering to focus on relevant commits
+  </Accordion>
+  <Accordion title="Multiple Remotes">
+    - Toggle remote branches only when needed
+    - Remote branches add overhead to graph calculation
+  </Accordion>
+  <Accordion title="Deep History">
+    - Load commits incrementally using "Load More"
+    - Use branch selector to limit scope
+  </Accordion>
+</AccordionGroup>
+
+## Related Settings
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `graphStyle` | `"rounded"` \| `"angular"` | `"rounded"` | Branch transition style |
+| `graphColours` | `string[]` | 12 colors | Color palette for branches |
+| `showUncommittedChanges` | `boolean` | `true` | Display uncommitted changes node |
+| `initialLoadCommits` | `number` | `300` | Commits to load on open |
+| `loadMoreCommits` | `number` | `100` | Commits per "Load More" |
+| `showCurrentBranchByDefault` | `boolean` | `false` | Filter to current branch |
+| `autoCenterCommitDetailsView` | `boolean` | `true` | Auto-scroll to details |
+| `tabIconColourTheme` | `"colour"` \| `"grey"` | `"colour"` | Tab icon color scheme |

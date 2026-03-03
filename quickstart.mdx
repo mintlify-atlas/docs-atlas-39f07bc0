@@ -1,80 +1,382 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quick Start
+description: Get up and running with (neo) Git Graph in under 2 minutes
 ---
 
-## Get started in three steps
+This guide will get you from installation to viewing your first Git graph and performing basic Git operations.
 
-Get your documentation site running locally and make your first customization.
+## Opening Git Graph
 
-### Step 1: Set up your local environment
+There are three ways to open the Git Graph view:
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+<Tabs>
+  <Tab title="Status Bar">
+    ### Using the Status Bar
 
-### Step 2: Deploy your changes
+    The quickest way to open Git Graph:
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    <Steps>
+      <Step title="Locate the Icon">
+        Look for the Git Graph icon in the status bar at the bottom of VS Code
+      </Step>
+      
+      <Step title="Click to Open">
+        Click the icon to open the Git Graph view
+      </Step>
+    </Steps>
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+    <Note>
+      The status bar icon is enabled by default. If you don't see it, check that `neo-git-graph.showStatusBarItem` is set to `true` in your settings.
+    </Note>
+  </Tab>
+  
+  <Tab title="Command Palette">
+    ### Using the Command Palette
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+    Open Git Graph via commands:
 
-### Step 3: Go live
+    <Steps>
+      <Step title="Open Command Palette">
+        Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (macOS)
+      </Step>
+      
+      <Step title="Search for Command">
+        Type `Git Graph: View Git Graph` or just `git graph`
+      </Step>
+      
+      <Step title="Execute Command">
+        Press `Enter` to open the view
+      </Step>
+    </Steps>
+  </Tab>
+  
+  <Tab title="Keyboard Shortcut">
+    ### Create a Keyboard Shortcut
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+    For fastest access, create a custom keybinding:
 
-## Next steps
+    <Steps>
+      <Step title="Open Keyboard Shortcuts">
+        Press `Ctrl+K Ctrl+S` (Windows/Linux) or `Cmd+K Cmd+S` (macOS)
+      </Step>
+      
+      <Step title="Search for Command">
+        Search for `neo-git-graph.view`
+      </Step>
+      
+      <Step title="Assign Keybinding">
+        Click the `+` icon and assign your preferred shortcut (e.g., `Ctrl+Alt+G`)
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
 
-Now that you have your docs running, explore these key features:
+## Understanding the Interface
 
-<CardGroup cols={2}>
+Once opened, the Git Graph view displays several key components:
 
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
+### Control Panel
 
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
+At the top of the view:
 
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
+- **Repo Selector**: Switch between repositories in a multi-root workspace
+- **Branch Selector**: Filter commits by branch (or view all branches)
+- **Show Remote Branches**: Toggle visibility of remote branches
+- **Refresh Button**: Reload the graph to see latest changes
 
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
+### Graph View
 
-</CardGroup>
+The main visualization shows:
+
+- **Colored Lines**: Each branch has a unique color
+- **Commit Dots**: Individual commits along the timeline
+- **Branch Labels**: Current branch names and tags
+- **Uncommitted Changes**: Special node showing working directory changes (if enabled)
+
+### Commit Table
+
+Next to the graph, see:
+
+- **Commit Message**: First line of the commit message
+- **Author**: Person who authored the commit
+- **Date**: When the commit was created
+- **Commit Hash**: Abbreviated SHA-1 hash
+
+## Your First Actions
+
+### View Commit Details
+
+<Steps>
+  <Step title="Click a Commit">
+    Click any commit in the graph or table
+  </Step>
+  
+  <Step title="Explore Details Panel">
+    The commit details panel shows:
+    - Full commit message
+    - Author and committer information
+    - List of changed files
+    - Available actions (checkout, cherry-pick, etc.)
+  </Step>
+  
+  <Step title="View File Diff">
+    Click any file in the changed files list to see a side-by-side diff
+  </Step>
+</Steps>
+
+### Switch Branches
+
+<Steps>
+  <Step title="Open Branch Selector">
+    Click the **Branch** dropdown in the control panel
+  </Step>
+  
+  <Step title="Choose a Branch">
+    Select the branch you want to view or checkout
+  </Step>
+  
+  <Step title="View Branch History">
+    The graph updates to show commits for the selected branch
+  </Step>
+</Steps>
+
+<Tip>
+  Enable **Show Remote Branches** to see remote tracking branches in the branch selector.
+</Tip>
+
+### Create a New Branch
+
+<Steps>
+  <Step title="Right-Click a Commit">
+    Right-click the commit where you want to create a branch
+  </Step>
+  
+  <Step title="Select Create Branch">
+    Choose **Create Branch...** from the context menu
+  </Step>
+  
+  <Step title="Name Your Branch">
+    Enter a branch name in the dialog and press Enter
+  </Step>
+  
+  <Step title="Confirm Creation">
+    The new branch appears in the graph with a label at the selected commit
+  </Step>
+</Steps>
+
+## Common Operations
+
+### Context Menu Actions
+
+Right-click any commit to access:
+
+<CodeGroup>
+```text Branch Operations
+Create Branch...
+Checkout Branch
+Rename Branch...
+Delete Branch...
+Merge into Current Branch...
+```
+
+```text Commit Operations
+Checkout Commit
+Cherry-pick Commit...
+Revert Commit...
+Reset Current Branch to this Commit...
+```
+
+```text Tag Operations
+Add Tag...
+Delete Tag...
+Push Tag...
+```
+
+```text Utilities
+Copy Commit Hash
+Copy Commit Message
+Copy Commit Subject
+```
+</CodeGroup>
+
+### View Uncommitted Changes
+
+By default, uncommitted changes appear as a special node:
+
+<Steps>
+  <Step title="Locate Uncommitted Node">
+    Look for the "Uncommitted Changes" entry at the top of the graph
+  </Step>
+  
+  <Step title="Click to View">
+    Click it to see all modified, added, and deleted files
+  </Step>
+  
+  <Step title="Inspect Changes">
+    Click individual files to see diffs against HEAD
+  </Step>
+</Steps>
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+  You can disable uncommitted changes by setting `neo-git-graph.showUncommittedChanges` to `false`. This can improve performance on large repositories.
 </Note>
+
+### Load More Commits
+
+For repositories with long histories:
+
+<Steps>
+  <Step title="Scroll to Bottom">
+    Scroll to the bottom of the commit table
+  </Step>
+  
+  <Step title="Click Load More">
+    If more commits are available, click the **Load More Commits** button
+  </Step>
+  
+  <Step title="View Extended History">
+    Additional commits are loaded and added to the graph
+  </Step>
+</Steps>
+
+## Configuration Tips
+
+Customize your experience with these popular settings:
+
+```json settings.json
+{
+  // Initial commits to load (default: 300)
+  "neo-git-graph.initialLoadCommits": 500,
+  
+  // Show only current branch when opening
+  "neo-git-graph.showCurrentBranchByDefault": true,
+  
+  // Date display format
+  "neo-git-graph.dateFormat": "Relative",
+  
+  // Graph style preference
+  "neo-git-graph.graphStyle": "rounded",
+  
+  // Auto-center commit details panel
+  "neo-git-graph.autoCenterCommitDetailsView": true,
+  
+  // Enable avatar fetching (sends emails to external services)
+  "neo-git-graph.fetchAvatars": true
+}
+```
+
+<Warning>
+  Enabling `fetchAvatars` will send commit author and committer email addresses to GitHub, GitLab, or Gravatar depending on your repository's remote origin.
+</Warning>
+
+### Customize Graph Colors
+
+Change the branch line colors:
+
+```json settings.json
+{
+  "neo-git-graph.graphColours": [
+    "#0085d9",
+    "#d9008f",
+    "#00d90a",
+    "#d98500",
+    "#a300d9",
+    "#ff0000",
+    "#00d9cc",
+    "#e138e8",
+    "#85d900",
+    "#dc5b23",
+    "#6f24d6",
+    "#ffcc00"
+  ]
+}
+```
+
+Colors can be specified as HEX codes (`#RRGGBB` or `#RRGGBBAA`) or RGB values (`rgb(r, g, b)`).
+
+## Working with Multiple Repositories
+
+If your workspace contains multiple Git repositories:
+
+<Steps>
+  <Step title="Open Repo Selector">
+    Click the **Repo** dropdown in the control panel
+  </Step>
+  
+  <Step title="Choose Repository">
+    Select the repository you want to view
+  </Step>
+  
+  <Step title="Switch Seamlessly">
+    The graph updates to show the selected repository's history
+  </Step>
+</Steps>
+
+<Tip>
+  Use `neo-git-graph.maxDepthOfRepoSearch` to control how deep VS Code searches for Git repositories in your workspace. Default is `0` (only top-level folders).
+</Tip>
+
+## Troubleshooting
+
+### Graph Won't Load
+
+If you see "Unable to load Git Graph":
+
+1. **Verify Git Installation**: Run `git --version` in the terminal
+2. **Check Repository**: Ensure you're in a valid Git repository (`git status`)
+3. **Configure Git Path**: For portable Git, set `git.path` in VS Code settings:
+
+```json settings.json
+{
+  "git.path": "C:\\Program Files\\Git\\bin\\git.exe"
+}
+```
+
+### Performance Issues
+
+For large repositories:
+
+```json settings.json
+{
+  // Reduce initial commit load
+  "neo-git-graph.initialLoadCommits": 100,
+  
+  // Disable uncommitted changes
+  "neo-git-graph.showUncommittedChanges": false,
+  
+  // Disable avatar fetching
+  "neo-git-graph.fetchAvatars": false
+}
+```
+
+### Clear Avatar Cache
+
+If avatars appear corrupted:
+
+<Steps>
+  <Step title="Open Command Palette">
+    Press `Ctrl+Shift+P` or `Cmd+Shift+P`
+  </Step>
+  
+  <Step title="Run Clear Command">
+    Type and select `Git Graph: Clear Avatar Cache`
+  </Step>
+  
+  <Step title="Refresh Graph">
+    Click the Refresh button to reload avatars
+  </Step>
+</Steps>
+
+## Next Steps
+
+Now that you're familiar with the basics:
+
+<CardGroup cols={2}>
+  <Card title="Configuration Guide" icon="gear" href="/configuration">
+    Explore all available settings and customization options
+  </Card>
+  
+  <Card title="Features Overview" icon="star" href="/features">
+    Learn about advanced features and Git operations
+  </Card>
+</CardGroup>

@@ -1,0 +1,196 @@
+---
+title: Devcontainer Setup
+description: Learn how to use neo-git-graph in remote and container development environments
+---
+
+One of the key features of neo-git-graph is its **devcontainer support**, allowing you to visualize Git history seamlessly in remote and containerized development environments.
+
+## Why Devcontainer Support Matters
+
+Unlike the original Git Graph extension, neo-git-graph is specifically designed to work in:
+
+- **VS Code Remote Containers** - Develop inside Docker containers
+- **GitHub Codespaces** - Cloud-based development environments
+- **Remote SSH** - Development on remote servers
+- **WSL (Windows Subsystem for Linux)** - Linux environment on Windows
+
+<Note>
+The original Git Graph changed its license in May 2019 and stopped receiving updates. Neo-git-graph is forked from the last MIT-licensed commit and adds modern devcontainer support.
+</Note>
+
+## Getting Started with Devcontainers
+
+<Steps>
+  <Step title="Install the extension">
+    Install neo-git-graph in your VS Code environment:
+    
+    - [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=asispts.neo-git-graph)
+    - [Open VSX Registry](https://open-vsx.org/extension/asispts/neo-git-graph)
+  </Step>
+  
+  <Step title="Open your project in a devcontainer">
+    If you have a `.devcontainer` configuration:
+    
+    1. Open the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`)
+    2. Run **Remote-Containers: Reopen in Container**
+    3. Wait for the container to build and start
+  </Step>
+  
+  <Step title="Verify Git is available">
+    Neo-git-graph requires Git to be installed in your container. Most development containers include Git by default.
+    
+    To verify:
+    ```bash
+    git --version
+    ```
+    
+    If Git is not installed, add it to your devcontainer configuration:
+    ```json
+    {
+      "features": {
+        "ghcr.io/devcontainers/features/git:1": {}
+      }
+    }
+    ```
+  </Step>
+  
+  <Step title="Open Git Graph">
+    Click the **Git Graph** button in the VS Code status bar, or run:
+    
+    - Command: **Neo Git Graph: View Git Graph (git log)**
+  </Step>
+</Steps>
+
+## Configuration for Remote Environments
+
+### Git Path Configuration
+
+If Git is installed in a non-standard location in your container, configure the path:
+
+```json
+{
+  "git.path": "/usr/local/bin/git"
+}
+```
+
+Add this to your `.devcontainer/devcontainer.json`:
+
+```json
+{
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "git.path": "/usr/local/bin/git"
+      }
+    }
+  }
+}
+```
+
+<Tip>
+Neo-git-graph uses the same `git.path` setting as VS Code's built-in Git extension, so if the Source Control view works, neo-git-graph will work too.
+</Tip>
+
+### Repository Discovery
+
+For workspaces with nested repositories, increase the search depth:
+
+```json
+{
+  "neo-git-graph.maxDepthOfRepoSearch": 2
+}
+```
+
+This tells neo-git-graph to search 2 levels deep for Git repositories.
+
+## Common Devcontainer Scenarios
+
+<Accordion title="Using with GitHub Codespaces">
+  Neo-git-graph works out of the box in GitHub Codespaces:
+  
+  1. Install the extension in your codespace
+  2. Open the Git Graph from the status bar
+  3. All features work the same as local development
+  
+  For automatic installation, add to `.devcontainer/devcontainer.json`:
+  ```json
+  {
+    "customizations": {
+      "vscode": {
+        "extensions": [
+          "asispts.neo-git-graph"
+        ]
+      }
+    }
+  }
+  ```
+</Accordion>
+
+<Accordion title="Using with Remote SSH">
+  When connecting to a remote server:
+  
+  1. Install neo-git-graph on the remote server (not locally)
+  2. Ensure Git is installed on the remote server
+  3. Open your repository and launch Git Graph
+  
+  The extension runs on the remote server, ensuring fast performance even with large repositories.
+</Accordion>
+
+<Accordion title="Using with WSL">
+  For Windows Subsystem for Linux:
+  
+  1. Install the extension in WSL (it will prompt you)
+  2. Open your WSL repository in VS Code
+  3. Git Graph will use the Linux Git binary automatically
+  
+  <Warning>
+  Don't mix Windows and WSL Git repositories. Keep your repos entirely in WSL for best performance.
+  </Warning>
+</Accordion>
+
+<Accordion title="Multi-repository workspaces">
+  Neo-git-graph supports multiple repositories in one workspace:
+  
+  - Each repository appears in the repository selector dropdown
+  - Switch between repositories without changing folders
+  - Configure `maxDepthOfRepoSearch` to find nested repos
+  
+  Example workspace structure:
+  ```
+  my-monorepo/
+  ├── .git/
+  ├── frontend/
+  │   └── .git/
+  └── backend/
+      └── .git/
+  ```
+  
+  Set `neo-git-graph.maxDepthOfRepoSearch: 2` to detect all three repositories.
+</Accordion>
+
+## Performance Optimization
+
+For large repositories in containers or remote environments:
+
+```json
+{
+  "neo-git-graph.showUncommittedChanges": false,
+  "neo-git-graph.initialLoadCommits": 200,
+  "neo-git-graph.loadMoreCommits": 100
+}
+```
+
+- `showUncommittedChanges: false` - Skip checking working directory status (faster initial load)
+- `initialLoadCommits` - Reduce initial commit count for faster rendering
+- `loadMoreCommits` - Load fewer commits per batch
+
+## Troubleshooting
+
+If Git Graph doesn't work in your devcontainer:
+
+1. **Check Git installation**: Run `git --version` in the terminal
+2. **Verify git.path**: Check that VS Code's Source Control works
+3. **Repository detection**: Ensure you've opened a folder containing a `.git` directory
+4. **Reload window**: Sometimes a reload helps: **Developer: Reload Window**
+
+For more issues, see the [Troubleshooting guide](/guides/troubleshooting).

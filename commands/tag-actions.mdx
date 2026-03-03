@@ -1,0 +1,89 @@
+---
+title: Tag Actions
+description: Operations for creating, deleting, and pushing Git tags from the graph view
+---
+
+Tag actions allow you to manage Git tags directly from the graph view. You can create lightweight or annotated tags, delete existing tags, and push tags to remote repositories.
+
+## Add Tag
+
+Create a new Git tag on a specific commit.
+
+**Command:** `addTag`
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `repo` | `string` | Yes | Path to the Git repository |
+| `commitHash` | `string` | Yes | Hash of the commit to tag |
+| `tagName` | `string` | Yes | Name for the new tag |
+| `lightweight` | `boolean` | Yes | If `true`, creates a lightweight tag; if `false`, creates an annotated tag |
+| `message` | `string` | Yes | Message for the annotated tag (used only when `lightweight` is `false`) |
+
+### Implementation
+
+- **Lightweight tag:** `git tag <tagName> <commitHash>`
+- **Annotated tag:** `git tag -a <tagName> -m <message> <commitHash>`
+
+### Response
+
+Returns a status indicating success (`null`) or an error message if the operation failed.
+
+<Info>
+Annotated tags are recommended for releases as they store additional metadata including the tagger name, email, date, and message.
+</Info>
+
+---
+
+## Delete Tag
+
+Delete a tag from the local repository.
+
+**Command:** `deleteTag`
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `repo` | `string` | Yes | Path to the Git repository |
+| `tagName` | `string` | Yes | Name of the tag to delete |
+
+### Implementation
+
+Executes: `git tag -d <tagName>`
+
+### Response
+
+Returns a status indicating success (`null`) or an error message if the operation failed.
+
+<Warning>
+This only deletes the tag locally. To remove a tag from the remote repository, you need to separately push the deletion.
+</Warning>
+
+---
+
+## Push Tag
+
+Push a tag to the remote repository.
+
+**Command:** `pushTag`
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `repo` | `string` | Yes | Path to the Git repository |
+| `tagName` | `string` | Yes | Name of the tag to push |
+
+### Implementation
+
+Executes: `git push origin <tagName>`
+
+### Response
+
+Returns a status indicating success (`null`) or an error message if the operation failed.
+
+<Note>
+Tags must be explicitly pushed to remote repositories. They are not included in regular `git push` operations.
+</Note>

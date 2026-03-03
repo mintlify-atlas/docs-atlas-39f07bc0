@@ -1,0 +1,289 @@
+---
+title: Commit Details
+description: View comprehensive commit information including metadata, file changes, and inline diffs
+---
+
+## Overview
+
+The commit details view provides in-depth information about each commit, including author information, commit message, file changes with statistics, and the ability to view diffs for individual files.
+
+## Viewing Commit Details
+
+Click on any commit in the graph to display its details. The view appears inline, expanding the graph to accommodate the information.
+
+<Info>
+With `autoCenterCommitDetailsView` enabled (default), the view automatically scrolls to center the commit details.
+</Info>
+
+## Commit Metadata
+
+### Information Displayed
+
+The commit details panel shows:
+
+<CardGroup cols={2}>
+  <Card title="Commit Hash" icon="fingerprint">
+    Full SHA-1 hash of the commit
+  </Card>
+  <Card title="Parent Commits" icon="code-branch">
+    SHA-1 hashes of parent commits (multiple for merges)
+  </Card>
+  <Card title="Author" icon="user">
+    Name and email of the commit author
+  </Card>
+  <Card title="Committer" icon="user-check">
+    Name of the person who committed (may differ from author)
+  </Card>
+  <Card title="Date" icon="clock">
+    Timestamp based on `dateType` setting
+  </Card>
+  <Card title="Message" icon="message">
+    Full commit message including body
+  </Card>
+</CardGroup>
+
+### Date Formats
+
+Configure how dates are displayed:
+
+<CodeGroup>
+
+```json Date & Time (Default)
+{
+  "neo-git-graph.dateFormat": "Date & Time"
+}
+// Example: "19 Mar 2019 21:34"
+```
+
+```json Date Only
+{
+  "neo-git-graph.dateFormat": "Date Only"
+}
+// Example: "19 Mar 2019"
+```
+
+```json Relative
+{
+  "neo-git-graph.dateFormat": "Relative"
+}
+// Example: "5 minutes ago"
+```
+
+</CodeGroup>
+
+### Date Type
+
+Choose which date to display:
+
+```json
+{
+  "neo-git-graph.dateType": "Author Date" // or "Commit Date"
+}
+```
+
+<Tabs>
+  <Tab title="Author Date">
+    The date when the changes were originally created (default)
+    ```bash
+    git log --format="%at"
+    ```
+  </Tab>
+  <Tab title="Commit Date">
+    The date when the commit was applied to the branch
+    ```bash  
+    git log --format="%ct"
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+These dates can differ when commits are cherry-picked, rebased, or applied from patches.
+</Note>
+
+## File Changes
+
+### Change Types
+
+The commit details view displays all modified files with their change type:
+
+| Type | Icon | Description |
+|------|------|-------------|
+| **A** | ➕ | Added - New file created |
+| **M** | ✏️ | Modified - Existing file changed |
+| **D** | ➖ | Deleted - File removed |
+| **R** | 🔄 | Renamed - File moved or renamed |
+
+### File Statistics
+
+For each file, the view shows:
+- **Additions**: Number of lines added (green)
+- **Deletions**: Number of lines removed (red)
+- **Old path**: Original file path (for renames)
+- **New path**: Current file path
+
+### Implementation Details
+
+The extension uses two Git commands to gather file information:
+
+```typescript
+// Get file change types and paths
+git diff-tree --name-status -r -m --root --find-renames --diff-filter=AMDR <hash>
+
+// Get line statistics
+git diff-tree --numstat -r -m --root --find-renames --diff-filter=AMDR <hash>
+```
+
+<Accordion title="Why two commands?">
+The extension runs both commands in parallel for efficiency:
+1. `--name-status` provides file paths and change types
+2. `--numstat` provides addition/deletion counts
+
+Results are merged using a filename lookup table (see `dataSource.ts:192-218`).
+</Accordion>
+
+## Viewing Diffs
+
+### Opening File Diffs
+
+Click on any file in the commit details to open a side-by-side diff view using VS Code's built-in diff viewer.
+
+### Diff Title Format
+
+The diff editor title varies by change type:
+
+<CodeGroup>
+
+```text Added Files
+filename.ext (Added in abc1234)
+```
+
+```text Deleted Files  
+filename.ext (Deleted in abc1234)
+```
+
+```text Modified Files
+filename.ext (abc1234^ ↔ abc1234)
+```
+
+</CodeGroup>
+
+### Diff Implementation
+
+Diffs are opened using the `vscode.diff` command:
+
+```typescript
+// From gitGraphView.ts:442-448
+vscode.commands.executeCommand(
+  "vscode.diff",
+  encodeDiffDocUri(repo, oldFilePath, commitHash + "^"),
+  encodeDiffDocUri(repo, newFilePath, commitHash),
+  title,
+  { preview: true }
+)
+```
+
+<Info>
+Diffs open in preview mode by default. Click the diff tab to pin it.
+</Info>
+
+### Special Cases
+
+<AccordionGroup>
+  <Accordion title="Added Files">
+    - Left side: Empty file
+    - Right side: New file content at commit
+  </Accordion>
+  <Accordion title="Deleted Files">
+    - Left side: File content at parent commit
+    - Right side: Empty file
+  </Accordion>
+  <Accordion title="Renamed Files">
+    - Shows both old and new paths
+    - Displays content diff if file was also modified
+  </Accordion>
+  <Accordion title="Merge Commits">
+    - Shows diff against first parent by default
+    - All file changes across merge are displayed
+  </Accordion>
+</AccordionGroup>
+
+## Commit Message Body
+
+The full commit message is displayed, including:
+- Subject line (first line)
+- Empty line separator
+- Message body (all subsequent lines)
+
+```typescript
+// From dataSource.ts:163
+body: lines.slice(1, lastLine + 1).join("\n")
+```
+
+<Tip>
+Commit messages are rendered with preserved formatting, including newlines and indentation.
+</Tip>
+
+## Context Menu Actions
+
+Right-click on commit details to access additional actions:
+
+- **Copy Commit Hash**: Copy full SHA-1 to clipboard
+- **Copy Commit Subject**: Copy first line of message
+- **Checkout Commit**: Detach HEAD at this commit
+- **Cherry-pick Commit**: Apply changes to current branch
+- **Revert Commit**: Create inverse commit
+- **Reset to Commit**: Move branch pointer (soft/mixed/hard)
+- **Create Branch**: Start new branch from this commit
+- **Create Tag**: Tag this commit
+
+## Auto-Centering
+
+Control whether the view scrolls to show commit details:
+
+```json
+{
+  "neo-git-graph.autoCenterCommitDetailsView": true
+}
+```
+
+<Tabs>
+  <Tab title="Enabled (Default)">
+    - View automatically scrolls to center the expanded commit
+    - Provides consistent viewing experience
+    - Recommended for most users
+  </Tab>
+  <Tab title="Disabled">
+    - View remains at current scroll position
+    - Useful when comparing multiple nearby commits
+    - Prevents disorientation from automatic scrolling
+  </Tab>
+</Tabs>
+
+## Related Features
+
+<CardGroup cols={2}>
+  <Card title="Avatar Support" icon="user-circle" href="/features/avatar-support">
+    Display author avatars from GitHub, GitLab, or Gravatar
+  </Card>
+  <Card title="Branch Operations" icon="code-branch" href="/features/branch-operations">
+    Checkout, merge, and manage branches from commit details
+  </Card>
+</CardGroup>
+
+## Performance Considerations
+
+<Warning>
+For commits with thousands of file changes, the details view may take time to render. The extension loads file statistics asynchronously to maintain responsiveness.
+</Warning>
+
+### Optimization Tips
+
+1. **Large commits**: Stats are fetched in parallel for faster loading
+2. **Merge commits**: Only changes vs. first parent are shown by default
+3. **Binary files**: Numstat may show `-` for additions/deletions
+
+## Keyboard Navigation
+
+- **Escape**: Close commit details and collapse view
+- **Click outside**: Deselect commit and close details
+- **Arrow keys**: Navigate to adjacent commits (if implemented in web UI)
